@@ -1,7 +1,7 @@
 import pickle
 import hyperspy.io as hs
 from nexusformat.nexus import NXdata, NXentry, NXfield, NXlink, nxopen
-from hyperspy.signals import HologramImage
+from hyperspy._signals.hologram_image import HologramImage
 
 
 class ImageSet:
@@ -59,11 +59,6 @@ class ImageSetHolo(ImageSet):
     def create_ref_image(self, path):
         self.ref_image = hs.load(path, signal_type="hologram")
 
-    def create_ImageSet(self, path_image, path_ref_image=None):
-        self.create_image(path_image)
-        if path_ref_image:
-            self.create_ref_image(path_ref_image)
-
     def write_ref_data(self, file, id_number, type_measurement):
         file[f"raw_data/{type_measurement}_{id_number}/raw_images/ref_image"] = NXfield(
             self.ref_image.data,
@@ -84,6 +79,11 @@ class ImageSetHolo(ImageSet):
             self.write_ref_data(
                 file=opened_file, id_number=id_number, type_measurement="holography"
             )
+
+    def create_ImageSet(self, path_image, path_ref_image=None):
+        self.create_image(path_image)
+        if path_ref_image:
+            self.create_ref_image(path_ref_image)
 
     def save_ImageSet(self, path):
         with nxopen(path, "a") as opened_file:
