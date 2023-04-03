@@ -2,6 +2,7 @@ import pickle
 import hyperspy.io as hs
 from nexusformat.nexus import NXdata, NXentry, NXfield, NXlink, nxopen
 from hyperspy._signals.hologram_image import HologramImage
+from ast import literal_eval
 
 
 class ImageSet:
@@ -50,19 +51,24 @@ class ImageSet:
                 file=opened_file, id_number=id_number, type_measurement=type_measurement
             )
 
+    def load_image(self,path,id_number=0, type_measurement='holography'):
+        with nxopen(path, "r") as opened_file:
+            image = opened_file[f"raw_data/{type_measurement}_{id_number}/raw_images/image"]
+            metadata = pickle.loads(literal_eval(str(opened_file[f"raw_data/{type_measurement}_{id_number}/metadata/metadata"])))
+            original_metadata = pickle.loads(literal_eval(str(opened_file[f"raw_data/{type_measurement}_{id_number}/metadata/original_metadata"])))
+            self.image = HologramImage(image.data,
+                metadata=metadata,
+                original_metadata=original_metadata,
+            )
 
 class ImageSetHolo(ImageSet):
     def __init__(self, image=None, ref_image=None):
         super().__init__(image)
         self.ref_image = ref_image
+        wave_image = None
 
     def create_ref_image(self, path):
         self.ref_image = hs.load(path, signal_type="hologram")
-
-    def create_ImageSet(self, path_image, path_ref_image=None):
-        self.create_image(path_image)
-        if path_ref_image:
-            self.create_ref_image(path_ref_image)
 
     def write_ref_data(self, file, id_number, type_measurement):
         file[f"raw_data/{type_measurement}_{id_number}/raw_images/ref_image"] = NXfield(
@@ -85,6 +91,11 @@ class ImageSetHolo(ImageSet):
                 file=opened_file, id_number=id_number, type_measurement="holography"
             )
 
+    def create_ImageSet(self, path_image, path_ref_image=None):
+        self.create_image(path_image)
+        if path_ref_image:
+            self.create_ref_image(path_ref_image)
+
     def save_ImageSet(self, path):
         with nxopen(path, "a") as opened_file:
             if "raw_data" not in opened_file:
@@ -101,6 +112,7 @@ class ImageSetHolo(ImageSet):
         if not self.ref_image and id_number == 0:
             print("No reference image is saved or already saved.")
         elif not self.ref_image and id_number > 0:
+            print("The link to the previous reference image is saved.")
             with nxopen(path, "a") as opened_file:
                 opened_file[
                     f"/raw_data/holography_{id_number}/raw_images/ref_image"
@@ -116,6 +128,19 @@ class ImageSetHolo(ImageSet):
                     f"/raw_data/holography_{id_number-1}/metadata/ref_original_metadata"
                 )
 
+    def load_ref_image(self, path, id_number=0):
+        with nxopen(path, "r") as opened_file:
+            image = opened_file[f"raw_data/holography_{id_number}/raw_images/ref_image"]
+            metadata = pickle.loads(literal_eval(str(opened_file[f"raw_data/holography_{id_number}/metadata/ref_metadata"])))
+            original_metadata = pickle.loads(literal_eval(str(opened_file[f"raw_data/holography_{id_number}/metadata/ref_original_metadata"])))
+            self.ref_image = HologramImage(image.data,
+                metadata=metadata,
+                original_metadata=original_metadata,
+            )
+
+    def load_ImageSet(self, path, id_number = 0):
+        self.load_image(path, id_number)
+        self.load_ref_image(path, id_number)
 
 class ImageSetXMCD(ImageSet):
     def create_ImageSet(self, path_image):
@@ -130,3 +155,6 @@ class ImageSetXMCD(ImageSet):
                 id_number = len(data_stored)
             print(id_number)
         self.save_image(path=path, id_number=id_number, type_measurement="xmcd")
+
+    def load_ImageSet(self, path, id_number = 0):
+        self.load_image(path, id_number, type_measurement="xmcd")
