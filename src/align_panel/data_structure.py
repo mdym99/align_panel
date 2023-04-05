@@ -7,6 +7,7 @@ from hyperspy._signals.hologram_image import HologramImage
 
 class ImageSet:
     def __init__(self, image=None):
+    def __init__(self, image=None):
         self.image = image
 
     def create_image(self, path, type_measurement="holography"):
@@ -173,42 +174,5 @@ class ImageSetHolo(ImageSet):
                 original_metadata=original_metadata,
             )
 
-    def load_ImageSet(self, path, id_number=0):
-        self.load_image(path, id_number)
-        self.load_ref_image(path, id_number)
+            print(f[f"{self.type_measurement}_{id_number}"].tree)
     
-    def phase_calculation(self, visualize = False, save_jpeg = False, name=None):
-        
-        sb_position = self.ref_image.estimate_sideband_position(ap_cb_radius=None,
-                                            sb ='upper')
-        sb_size = self.ref_image.estimate_sideband_size(sb_position)
-        
-        self.wave_image = self.image.reconstruct_phase(self.ref_image,
-                                  sb_position=sb_position,
-                                  sb_size=sb_size, output_shape=np.shape(self.image.data))
-        unwrapped_phase = self.wave_image.unwrapped_phase()
-
-        if visualize:
-            unwrapped_phase.plot()
-
-        if save_jpeg:
-            unwrapped_phase.save(f"{name}.jpg")
-    
-
-class ImageSetXMCD(ImageSet):
-    def create_ImageSet(self, path_image):
-        self.create_image(path_image, type_measurement="xmcd")
-
-    def save_ImageSet(self, path, id_number=0):
-        with nxopen(path, "a") as opened_file:
-            if "raw_data" not in opened_file:
-                id_number = 0
-            else:
-                data_stored = [*opened_file["raw_data"]]
-                id_number = len(data_stored)
-            print(id_number)
-        self.save_image(path=path, id_number=id_number, type_measurement="xmcd")
-
-    def load_ImageSet(self, path, id_number=0):
-        self.load_image(path, id_number, type_measurement="xmcd")
-
