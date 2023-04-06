@@ -211,4 +211,3 @@ class ImageSetXMCD(ImageSet):
 
     def load_ImageSet(self, path, id_number=0):
         self.load_image(path, id_number, type_measurement="xmcd")
-
