@@ -145,7 +145,7 @@ test*
 t_*.py
 t_*.*
 # folders
-testingplace.py
+try_private.ipynb
 data/
 try.ipynb
 results/
