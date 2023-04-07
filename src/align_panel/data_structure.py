@@ -21,7 +21,9 @@ class ImageSet(ABC):
             if scope == "full":
                 print(opened_file.tree)
             elif scope == "short":
-                print(opened_file["raw_data"].entries)
+                print(f'Content of file : {path}')
+                for entry in opened_file['raw_data']:
+                    print(entry + ' : ' + opened_file['raw_data'][entry].attrs['type_measurement'])
 
     def save_image(self, file, id_number):
         file[f"raw_data/imageset_{id_number}/raw_images/image"] = NXfield(
