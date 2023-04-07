@@ -2,18 +2,18 @@ import json
 import hyperspy.io as hs
 import numpy as np
 from nexusformat.nexus import NXdata, NXentry, NXfield, NXlink, nxopen
-from hyperspy._signals.hologram_image import HologramImage
+from hyperspy._signals.hologram_image import HologramImage, Signal2D
+from abc import ABC, abstractclassmethod
 
-
-class ImageSet:
-    def __init__(self, image=None):
+class ImageSet(ABC):
+    def __init__(self, image: Signal2D, type_measurement: str):
         self.image = image
+        self.type_measurement = type_measurement
 
-    def create_image(self, path, type_measurement="holography"):
-        if type_measurement == "holography":
-            self.image = hs.load(path, signal_type="hologram")
-        elif type_measurement == "xmcd":
-            self.image = hs.load(path)
+    @abstractclassmethod
+    def load(cls, path):
+        image = hs.load(path)
+        return cls(image)
 
     @staticmethod
     def show_content(path, scope="short"):
@@ -87,13 +87,16 @@ class ImageSet:
                 ] = NXfield(notes.read())
 
 class ImageSetHolo(ImageSet):
-    def __init__(self, image=None, ref_image=None):
-        super().__init__(image)
+    def __init__(self, image: HologramImage, ref_image: HologramImage):
+        super().__init__(image, type_measurement="holography")
         self.ref_image = ref_image
         wave_image = None
 
-    def create_ref_image(self, path):
-        self.ref_image = hs.load(path, signal_type="hologram")
+    @classmethod
+    def load(cls, path_image, path_ref_image):
+        image = hs.load(path_image, signal_type="hologram")
+        ref_image = hs.load(path_ref_image, signal_type="hologram")
+        return cls(image, ref_image)
 
     def write_ref_data(self, file, id_number, type_measurement):
         file[f"raw_data/{type_measurement}_{id_number}/raw_images/ref_image"] = NXfield(
@@ -196,8 +199,12 @@ class ImageSetHolo(ImageSet):
     
 
 class ImageSetXMCD(ImageSet):
-    def create_ImageSet(self, path_image):
-        self.create_image(path_image, type_measurement="xmcd")
+    def __init__(self, image: Signal2D):
+        super().__init__(image, type_measurement="xmcd")
+
+    @classmethod
+    def load(cls, path):
+        return super().load(path)
 
     def save_ImageSet(self, path, id_number=0):
         with nxopen(path, "a") as opened_file:
