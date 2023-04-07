@@ -121,7 +121,7 @@ class ImageSetHolo(ImageSet):
             self.write_ref_data(
                 file=opened_file, id_number=id_number)
 
-    def save_ImageSet(self, path):
+    def save(self, path):
         with nxopen(path, "a") as opened_file:
             if "raw_data" not in opened_file:
                 id_number = 0
@@ -203,7 +203,7 @@ class ImageSetXMCD(ImageSet):
     def load(cls, path):
         return super().load(path)
 
-    def save_ImageSet(self, path, id_number=0):
+    def save(self, path, id_number=0):
         with nxopen(path, "a") as opened_file:
             if "raw_data" not in opened_file:
                 id_number = 0
