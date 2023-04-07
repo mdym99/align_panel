@@ -144,8 +144,11 @@ test_data/
 test*
 t_*.py
 t_*.*
+
 # folders
-try_private.ipynb
 data/
-try.ipynb
 results/
+
+# codes for testing
+try.ipynb
+try_private.ipynb
