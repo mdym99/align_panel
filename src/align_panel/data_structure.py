@@ -23,33 +23,34 @@ class ImageSet(ABC):
             elif scope == "short":
                 print(opened_file["raw_data"].entries)
 
-    def write_data(self, file, id_number, type_measurement):
-        file[f"raw_data/{type_measurement}_{id_number}/raw_images/image"] = NXfield(
+    def write_data(self, file, id_number):
+        file[f"raw_data/imageset_{id_number}/raw_images/image"] = NXfield(
             self.image.data,
             name="image",
             units="pixesl",
             signal="image",
             interpretation="image",
         )
-        file[f"raw_data/{type_measurement}_{id_number}/metadata/metadata"] = NXfield(
+        file[f"raw_data/imageset_{id_number}/metadata/metadata"] = NXfield(
             json.dumps(self.image.metadata.as_dictionary())
         )
 
         file[
-            f"raw_data/{type_measurement}_{id_number}/metadata/original_metadata"
+            f"raw_data/imageset_{id_number}/metadata/original_metadata"
         ] = NXfield(json.dumps(self.image.original_metadata.as_dictionary()))
 
-    def save_image(self, path, id_number=0, type_measurement="holography"):
+    def save_image(self, path, id_number=0):
         with nxopen(path, "a") as opened_file:
             if id_number == 0:
                 opened_file["raw_data"] = NXentry()
-            opened_file[f"raw_data/{type_measurement}_{id_number}"] = NXdata()
+            opened_file[f"raw_data/imageset_{id_number}"] = NXdata()
+            opened_file[f"raw_data/imageset_{id_number}"].attrs["type_measurement"] = self.type_measurement
             opened_file[
-                f"raw_data/{type_measurement}_{id_number}/raw_images"
+                f"raw_data/imageset_{id_number}/raw_images"
             ] = NXdata()
-            opened_file[f"raw_data/{type_measurement}_{id_number}/metadata"] = NXdata()
+            opened_file[f"raw_data/imageset_{id_number}/metadata"] = NXdata()
             self.write_data(
-                file=opened_file, id_number=id_number, type_measurement=type_measurement
+                file=opened_file, id_number=id_number
             )
 
     def load_image(self, path, id_number=0, type_measurement="holography"):
@@ -87,19 +88,21 @@ class ImageSet(ABC):
                 ] = NXfield(notes.read())
 
 class ImageSetHolo(ImageSet):
-    def __init__(self, image: HologramImage, ref_image: HologramImage):
+    def __init__(self, image: HologramImage, ref_image: HologramImage = None):
         super().__init__(image, type_measurement="holography")
         self.ref_image = ref_image
         wave_image = None
 
     @classmethod
-    def load(cls, path_image, path_ref_image):
+    def load(cls, path_image, path_ref_image = None):
         image = hs.load(path_image, signal_type="hologram")
-        ref_image = hs.load(path_ref_image, signal_type="hologram")
-        return cls(image, ref_image)
+        if path_ref_image:
+            ref_image = hs.load(path_ref_image, signal_type="hologram")
+            return cls(image, ref_image)
+        return cls(image)
 
-    def write_ref_data(self, file, id_number, type_measurement):
-        file[f"raw_data/{type_measurement}_{id_number}/raw_images/ref_image"] = NXfield(
+    def write_ref_data(self, file, id_number):
+        file[f"raw_data/imageset_{id_number}/raw_images/ref_image"] = NXfield(
             self.ref_image.data,
             name="ref_image",
             units="pixesl",
@@ -107,22 +110,16 @@ class ImageSetHolo(ImageSet):
             interpretation="image",
         )
         file[
-            f"raw_data/{type_measurement}_{id_number}/metadata/ref_metadata"
+            f"raw_data/imageset_{id_number}/metadata/ref_metadata"
         ] = NXfield(json.dumps(self.ref_image.metadata.as_dictionary()))
         file[
-            f"raw_data/{type_measurement}_{id_number}/metadata/ref_original_metadata"
+            f"raw_data/imageset_{id_number}/metadata/ref_original_metadata"
         ] = NXfield(json.dumps(self.ref_image.original_metadata.as_dictionary()))
 
     def save_ref_image(self, path, id_number=0):
         with nxopen(path, "a") as opened_file:
             self.write_ref_data(
-                file=opened_file, id_number=id_number, type_measurement="holography"
-            )
-
-    def create_ImageSet(self, path_image, path_ref_image=None):
-        self.create_image(path_image)
-        if path_ref_image:
-            self.create_ref_image(path_ref_image)
+                file=opened_file, id_number=id_number)
 
     def save_ImageSet(self, path):
         with nxopen(path, "a") as opened_file:
@@ -133,7 +130,7 @@ class ImageSetHolo(ImageSet):
                 id_number = len(data_stored)
             print(id_number)
             self.save_image(
-                path=path, id_number=id_number, type_measurement="holography"
+                path=path, id_number=id_number
             )
         if self.ref_image:
             self.save_ref_image(path=path, id_number=id_number)
@@ -143,14 +140,14 @@ class ImageSetHolo(ImageSet):
             print("The link to the previous reference image is saved.")
             with nxopen(path, "a") as opened_file:
                 opened_file[
-                    f"raw_data/holography_{id_number}/raw_images/ref_image"
+                    f"raw_data/imageset_{id_number}/raw_images/ref_image"
                 ] = NXlink(f"raw_data/holography_{id_number-1}/raw_images/ref_image")
 
                 opened_file[
-                    f"raw_data/holography_{id_number}/metadata/ref_metadata"
+                    f"raw_data/imageset_{id_number}/metadata/ref_metadata"
                 ] = NXlink(f"raw_data/holography_{id_number-1}/metadata/ref_metadata")
                 opened_file[
-                    f"raw_data/holography_{id_number}/metadata/ref_original_metadata"
+                    f"raw_data/imageset_{id_number}/metadata/ref_original_metadata"
                 ] = NXlink(
                     f"raw_data/holography_{id_number-1}/metadata/ref_original_metadata"
                 )
@@ -214,7 +211,7 @@ class ImageSetXMCD(ImageSet):
                 data_stored = [*opened_file["raw_data"]]
                 id_number = len(data_stored)
             print(id_number)
-        self.save_image(path=path, id_number=id_number, type_measurement="xmcd")
+        self.save_image(path=path, id_number=id_number)
 
     def load_ImageSet(self, path, id_number=0):
         self.load_image(path, id_number, type_measurement="xmcd")
