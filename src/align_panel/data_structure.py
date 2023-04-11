@@ -5,6 +5,7 @@ import numpy as np
 from nexusformat.nexus import NXdata, NXentry, NXfield, NXlink, nxopen
 from hyperspy._signals.hologram_image import HologramImage, Signal2D
 
+
 class ImageSet(ABC):
     def __init__(self, image: Signal2D, type_measurement: str = None):
         self.image = image
@@ -36,13 +37,23 @@ class ImageSet(ABC):
             signal="image",
             interpretation="image",
         )
-        if str(self.image.axes_manager[0].units) == '<undefined>':
-            print('The axes are not properly defined. Image is saved without axes information.')
+        if str(self.image.axes_manager[0].units) == "<undefined>":
+            print(
+                "The axes are not properly defined. Image is saved without axes information."
+            )
         else:
-            file[f"raw_data/imageset_{id_number}/raw_images/image"].attrs["units"] = self.image.axes_manager[0].units
-            file[f"raw_data/imageset_{id_number}/raw_images/image"].attrs["1_axe"] = self.image.axes_manager[0].name
-            file[f"raw_data/imageset_{id_number}/raw_images/image"].attrs["2_axe"] = self.image.axes_manager[1].name
-            file[f"raw_data/imageset_{id_number}/raw_images/image"].attrs["scale"] = self.image.axes_manager[0].scale
+            file[f"raw_data/imageset_{id_number}/raw_images/image"].attrs[
+                "units"
+            ] = self.image.axes_manager[0].units
+            file[f"raw_data/imageset_{id_number}/raw_images/image"].attrs[
+                "1_axe"
+            ] = self.image.axes_manager[0].name
+            file[f"raw_data/imageset_{id_number}/raw_images/image"].attrs[
+                "2_axe"
+            ] = self.image.axes_manager[1].name
+            file[f"raw_data/imageset_{id_number}/raw_images/image"].attrs[
+                "scale"
+            ] = self.image.axes_manager[0].scale
 
         file[f"raw_data/imageset_{id_number}/metadata/metadata"] = NXfield(
             json.dumps(self.image.metadata.as_dictionary())
@@ -74,13 +85,9 @@ class ImageSet(ABC):
     @abstractclassmethod
     def load_from_nxs(cls, path, id_number=0):
         with nxopen(path, "r") as opened_file:
-            image = opened_file[
-                f"raw_data/imageset_{id_number}/raw_images/image"
-            ]
+            image = opened_file[f"raw_data/imageset_{id_number}/raw_images/image"]
             metadata = json.loads(
-                opened_file[
-                    f"raw_data/imageset_{id_number}/metadata/metadata"
-                ].nxdata
+                opened_file[f"raw_data/imageset_{id_number}/metadata/metadata"].nxdata
             )
             original_metadata = json.loads(
                 opened_file[
@@ -93,16 +100,16 @@ class ImageSet(ABC):
                 original_metadata=original_metadata,
             )
             if "units" in image.attrs:
-                full_image.axes_manager[0].name=image.attrs["1_axe"]
-                full_image.axes_manager[1].name=image.attrs["2_axe"]
-                full_image.axes_manager[0].units=image.attrs["units"]
-                full_image.axes_manager[1].units=image.attrs["units"]
-                full_image.axes_manager[0].scale=image.attrs["scale"]
-                full_image.axes_manager[1].scale=image.attrs["scale"]
+                full_image.axes_manager[0].name = image.attrs["1_axe"]
+                full_image.axes_manager[1].name = image.attrs["2_axe"]
+                full_image.axes_manager[0].units = image.attrs["units"]
+                full_image.axes_manager[1].units = image.attrs["units"]
+                full_image.axes_manager[0].scale = image.attrs["scale"]
+                full_image.axes_manager[1].scale = image.attrs["scale"]
         return cls(full_image)
-                
+
     @staticmethod
-    def delete_ImageSet_from_file(path, id_number=0):
+    def delete_imageset_from_file(path, id_number=0):
         with nxopen(path, "a") as opened_file:
             del opened_file[f"raw_data/imageset_{id_number}"]
 
@@ -113,7 +120,7 @@ class ImageSet(ABC):
                 opened_file[f"raw_data/imageset_{id_number}/metadata/notes"] = NXfield(
                     notes.read()
                 )
-    
+
     def set_axes(self, axe1_name: str, axe2_name: str, units, scale):
         self.image.axes_manager[0].name = axe1_name
         self.image.axes_manager[1].name = axe2_name
@@ -121,6 +128,7 @@ class ImageSet(ABC):
         self.image.axes_manager[1].units = units
         self.image.axes_manager[0].scale = scale
         self.image.axes_manager[1].scale = scale
+
 
 class ImageSetHolo(ImageSet):
     def __init__(self, image: HologramImage, ref_image: HologramImage = None):
@@ -173,17 +181,13 @@ class ImageSetHolo(ImageSet):
         id_number = super().save(path, id_number)
         with nxopen(path, "a") as opened_file:
             self.save_ref_image(opened_file, id_number)
-            
+
     @classmethod
     def load_from_nxs(cls, path, id_number=0):
         with nxopen(path, "r") as opened_file:
-            image = opened_file[
-                f"raw_data/imageset_{id_number}/raw_images/image"
-            ]
+            image = opened_file[f"raw_data/imageset_{id_number}/raw_images/image"]
             metadata = json.loads(
-                opened_file[
-                    f"raw_data/imageset_{id_number}/metadata/metadata"
-                ].nxdata
+                opened_file[f"raw_data/imageset_{id_number}/metadata/metadata"].nxdata
             )
             original_metadata = json.loads(
                 opened_file[
@@ -196,18 +200,16 @@ class ImageSetHolo(ImageSet):
                 original_metadata=original_metadata,
             )
             if "units" in image.attrs:
-                full_image.axes_manager[0].name=image.attrs["1_axe"]
-                full_image.axes_manager[1].name=image.attrs["2_axe"]
-                full_image.axes_manager[0].units=image.attrs["units"]
-                full_image.axes_manager[1].units=image.attrs["units"]
-                full_image.axes_manager[0].scale=image.attrs["scale"]
-                full_image.axes_manager[1].scale=image.attrs["scale"]
-            if "ref_image" in opened_file[
-                f"raw_data/imageset_{id_number}/raw_images"
-            ]:
+                full_image.axes_manager[0].name = image.attrs["1_axe"]
+                full_image.axes_manager[1].name = image.attrs["2_axe"]
+                full_image.axes_manager[0].units = image.attrs["units"]
+                full_image.axes_manager[1].units = image.attrs["units"]
+                full_image.axes_manager[0].scale = image.attrs["scale"]
+                full_image.axes_manager[1].scale = image.attrs["scale"]
+            if "ref_image" in opened_file[f"raw_data/imageset_{id_number}/raw_images"]:
                 ref_image = opened_file[
-                f"raw_data/imageset_{id_number}/raw_images/ref_image"
-                    ].nxdata
+                    f"raw_data/imageset_{id_number}/raw_images/ref_image"
+                ].nxdata
                 ref_metadata = json.loads(
                     opened_file[
                         f"raw_data/imageset_{id_number}/metadata/ref_metadata"
@@ -226,7 +228,7 @@ class ImageSetHolo(ImageSet):
                 full_ref_image.axes_manager = full_image.axes_manager
                 return cls(full_image, full_ref_image)
             return cls(full_image)
-                
+
     def phase_calculation(self, visualize=False, save_jpeg=False, name=None):
         sb_position = self.ref_image.estimate_sideband_position(
             ap_cb_radius=None, sb="upper"
@@ -245,7 +247,8 @@ class ImageSetHolo(ImageSet):
             unwrapped_phase.plot()
 
         if save_jpeg:
-            unwrapped_phase.save(f"{name}.jpg")
+
+            unwrapped_phase.save(f"results/{name}.jpg")
 
 
 class ImageSetXMCD(ImageSet):
@@ -261,4 +264,4 @@ class ImageSetXMCD(ImageSet):
 
     @classmethod
     def load_from_nxs(cls, path, id_number=0):
-       return super().load_from_nxs(path, id_number)
+        return super().load_from_nxs(path, id_number)
