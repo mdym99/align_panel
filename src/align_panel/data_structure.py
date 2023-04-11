@@ -14,6 +14,10 @@ class ImageSet(ABC):
     @abstractclassmethod
     def load(cls, path):
         image = hs.load(path)
+        if not image.metadata["General"]["title"]:
+            image.metadata["General"]["title"] = image.metadata["General"][
+                "original_filename"
+            ].split(".")[0]
         return cls(image)
 
     @staticmethod
@@ -106,6 +110,10 @@ class ImageSet(ABC):
                 full_image.axes_manager[1].units = image.attrs["units"]
                 full_image.axes_manager[0].scale = image.attrs["scale"]
                 full_image.axes_manager[1].scale = image.attrs["scale"]
+            if not full_image.metadata["General"]["title"]:
+                full_image.metadata["General"]["title"] = full_image.metadata[
+                    "General"
+                ]["original_filename"].split(".")[0]
         return cls(full_image)
 
     @staticmethod
@@ -247,7 +255,6 @@ class ImageSetHolo(ImageSet):
             unwrapped_phase.plot()
 
         if save_jpeg:
-
             unwrapped_phase.save(f"results/{name}.jpg")
 
 
