@@ -33,10 +33,13 @@ class ImageSet(ABC):
         file[f"raw_data/imageset_{id_number}/raw_images/image"] = NXfield(
             self.image.data,
             name="image",
-            units="pixesl",
             signal="image",
             interpretation="image",
         )
+        file[f"raw_data/imageset_{id_number}/raw_images/image"].attrs["units"] = self.image.axes_manager[0].units
+        file[f"raw_data/imageset_{id_number}/raw_images/image"].attrs["1_axe"] = self.image.axes_manager[0].name
+        file[f"raw_data/imageset_{id_number}/raw_images/image"].attrs["2_axe"] = self.image.axes_manager[1].name
+        file[f"raw_data/imageset_{id_number}/raw_images/image"].attrs["scale"] = self.image.axes_manager[0].scale
         file[f"raw_data/imageset_{id_number}/metadata/metadata"] = NXfield(
             json.dumps(self.image.metadata.as_dictionary())
         )
@@ -97,7 +100,14 @@ class ImageSet(ABC):
                 opened_file[f"raw_data/imageset_{id_number}/metadata/notes"] = NXfield(
                     notes.read()
                 )
-
+    
+    def set_axes(self, axe1_name: str, axe2_name: str, units, scale):
+        self.image.axes_manager[0].name = axe1_name
+        self.image.axes_manager[1].name = axe2_name
+        self.image.axes_manager[0].units = units
+        self.image.axes_manager[1].units = units
+        self.image.axes_manager[0].scale = scale
+        self.image.axes_manager[1].scale = scale
 
 class ImageSetHolo(ImageSet):
     def __init__(self, image: HologramImage, ref_image: HologramImage = None):
