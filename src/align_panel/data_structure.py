@@ -36,10 +36,14 @@ class ImageSet(ABC):
             signal="image",
             interpretation="image",
         )
-        file[f"raw_data/imageset_{id_number}/raw_images/image"].attrs["units"] = self.image.axes_manager[0].units
-        file[f"raw_data/imageset_{id_number}/raw_images/image"].attrs["1_axe"] = self.image.axes_manager[0].name
-        file[f"raw_data/imageset_{id_number}/raw_images/image"].attrs["2_axe"] = self.image.axes_manager[1].name
-        file[f"raw_data/imageset_{id_number}/raw_images/image"].attrs["scale"] = self.image.axes_manager[0].scale
+        if str(self.image.axes_manager[0].units) == '<undefined>':
+            print('The axes are not properly defined. Image is saved without axes information.')
+        else:
+            file[f"raw_data/imageset_{id_number}/raw_images/image"].attrs["units"] = self.image.axes_manager[0].units
+            file[f"raw_data/imageset_{id_number}/raw_images/image"].attrs["1_axe"] = self.image.axes_manager[0].name
+            file[f"raw_data/imageset_{id_number}/raw_images/image"].attrs["2_axe"] = self.image.axes_manager[1].name
+            file[f"raw_data/imageset_{id_number}/raw_images/image"].attrs["scale"] = self.image.axes_manager[0].scale
+
         file[f"raw_data/imageset_{id_number}/metadata/metadata"] = NXfield(
             json.dumps(self.image.metadata.as_dictionary())
         )
