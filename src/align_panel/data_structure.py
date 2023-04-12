@@ -7,7 +7,7 @@ from hyperspy._signals.hologram_image import HologramImage, Signal2D
 
 
 class ImageSet(ABC):
-    def __init__(self, image: Signal2D, type_measurement: str = None):
+    def __init__(self, image, type_measurement: str = None):
         self.image = image
         self.type_measurement = type_measurement
 
@@ -125,9 +125,10 @@ class ImageSet(ABC):
     def add_notes(path_notes, path_file, id_number=0):
         with nxopen(path_file, "a") as opened_file:
             with open(path_notes, "r") as notes:
-                opened_file[f"raw_data/imageset_{id_number}/metadata/notes"] = NXfield(
-                    notes.read()
-                )
+                name_of_file = path_notes.split("/")[-1].split(".")[0]
+                opened_file[
+                    f"raw_data/imageset_{id_number}/metadata/{name_of_file}"
+                ] = NXfield(notes.read())
 
     def set_axes(self, axe1_name: str, axe2_name: str, units, scale):
         self.image.axes_manager[0].name = axe1_name
@@ -140,6 +141,14 @@ class ImageSet(ABC):
 
 class ImageSetHolo(ImageSet):
     def __init__(self, image: HologramImage, ref_image: HologramImage = None):
+        if not isinstance(image, HologramImage):
+            raise TypeError(
+                "The image must be of the type HologramImage. Use the .load() method."
+            )
+        if ref_image and not isinstance(ref_image, HologramImage):
+            raise TypeError(
+                "The reference image must be of the type HologramImage. Use the .load() method."
+            )
         super().__init__(image, type_measurement="holography")
         self.ref_image = ref_image
         wave_image = None
@@ -260,6 +269,10 @@ class ImageSetHolo(ImageSet):
 
 class ImageSetXMCD(ImageSet):
     def __init__(self, image: Signal2D):
+        if not isinstance(image, Signal2D):
+            raise TypeError(
+                "The image must be of the type Signal2D. Use the .load() method."
+            )
         super().__init__(image, type_measurement="xmcd")
 
     @classmethod
