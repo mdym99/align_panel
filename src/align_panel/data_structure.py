@@ -11,6 +11,13 @@ class ImageSet(ABC):
         self.image = image
         self.type_measurement = type_measurement
 
+    def __repr__(self):
+        return (
+            f"{self.type_measurement} image set \n "
+            f"image file name: {self.image.metadata['General']['original_filename']}"
+            f"\n  shape: {self.image.data.shape} \n "
+        )
+
     @abstractclassmethod
     def load(cls, path):
         image = hs.load(path)
@@ -145,13 +152,28 @@ class ImageSetHolo(ImageSet):
             raise TypeError(
                 "The image must be of the type HologramImage. Use the .load() method."
             )
-        if ref_image and not isinstance(ref_image, HologramImage):
-            raise TypeError(
-                "The reference image must be of the type HologramImage. Use the .load() method."
-            )
+        if ref_image:
+            if not isinstance(ref_image, HologramImage):
+                raise TypeError(
+                    "The reference image must be of the type HologramImage. Use the .load() method."
+                )
+            if image.data.shape != ref_image.data.shape:
+                raise ValueError(
+                    "The image and the reference image must have the same shape."
+                )
+
         super().__init__(image, type_measurement="holography")
         self.ref_image = ref_image
         wave_image = None
+
+    def __repr__(self):
+        if self.ref_image:
+            return (
+                super().__repr__()
+                + f"reference file name: {self.ref_image.metadata['General']['original_filename']}"
+                f" \n  shape: {self.ref_image.data.shape} \n "
+            )
+        return super().__repr__() + "no reference image is loaded \n "
 
     @classmethod
     def load(cls, path, path_ref=None):
