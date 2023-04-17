@@ -83,7 +83,7 @@ class ImageSet(ABC):
             else:
                 data_stored = [*opened_file["raw_data"]]
                 id_number = len(data_stored)
-            print(id_number)
+            print(f'Image set is saved with id_number: {id_number}.')
             opened_file[f"raw_data/imageset_{id_number}"] = NXdata()
             opened_file[f"raw_data/imageset_{id_number}"].attrs[
                 "type_measurement"
