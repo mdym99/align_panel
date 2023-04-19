@@ -83,7 +83,7 @@ class ImageSet(ABC):
             else:
                 data_stored = [*opened_file["raw_data"]]
                 id_number = len(data_stored)
-            print(f'Image set is saved with id_number: {id_number}.')
+            print(f"Image set is saved with id_number: {id_number}.")
             opened_file[f"raw_data/imageset_{id_number}"] = NXdata()
             opened_file[f"raw_data/imageset_{id_number}"].attrs[
                 "type_measurement"
@@ -164,7 +164,8 @@ class ImageSetHolo(ImageSet):
 
         super().__init__(image, type_measurement="holography")
         self.ref_image = ref_image
-        wave_image = None
+        self.wave_image = None
+        self.unwrapped_phase = None
 
     def __repr__(self):
         if self.ref_image:
@@ -280,13 +281,13 @@ class ImageSetHolo(ImageSet):
             sb_size=sb_size,
             output_shape=np.shape(self.image.data),
         )
-        unwrapped_phase = self.wave_image.unwrapped_phase()
+        self.unwrapped_phase = self.wave_image.unwrapped_phase()
 
         if visualize:
-            unwrapped_phase.plot()
+            self.unwrapped_phase.plot()
 
         if save_jpeg:
-            unwrapped_phase.save(f"results/{name}.jpg")
+            self.unwrapped_phase.save(f"results/{name}.jpg")
 
 
 class ImageSetXMCD(ImageSet):
