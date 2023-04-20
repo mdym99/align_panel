@@ -282,7 +282,7 @@ class ImageSetHolo(ImageSet):
             output_shape=np.shape(self.image.data),
         )
         self.unwrapped_phase = self.wave_image.unwrapped_phase()
-
+        self.image.metadata["Signal"]['Holography'] = self.wave_image.metadata['Signal']['Holography']
         if visualize:
             self.unwrapped_phase.plot()
 
