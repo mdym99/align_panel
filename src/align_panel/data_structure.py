@@ -282,7 +282,44 @@ class ImageSetHolo(ImageSet):
             output_shape=np.shape(self.image.data),
         )
         self.unwrapped_phase = self.wave_image.unwrapped_phase()
-        self.image.metadata["Signal"]['Holography'] = self.wave_image.metadata['Signal']['Holography']
+        self.image.metadata["Signal"]["Holography"] = self.wave_image.metadata[
+            "Signal"
+        ]["Holography"]
+        self.image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
+            "sb_position"
+        ] = list(
+            self.wave_image.metadata["Signal"]["Holography"][
+                "Reconstruction_parameters"
+            ]["sb_position"].data.astype("float")
+        )
+        self.image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
+            "sb_size"
+        ] = list(
+            self.wave_image.metadata["Signal"]["Holography"][
+                "Reconstruction_parameters"
+            ]["sb_size"].data.astype("float")
+        )
+        self.image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
+            "sb_smoothness"
+        ] = list(
+            self.wave_image.metadata["Signal"]["Holography"][
+                "Reconstruction_parameters"
+            ]["sb_smoothness"].data.astype("float")
+        )
+        if (
+            self.wave_image.metadata["Signal"]["Holography"][
+                "Reconstruction_parameters"
+            ]["sb_units"]
+            is not None
+        ):
+            self.image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
+                "sb_units"
+            ] = list(
+                self.wave_image.metadata["Signal"]["Holography"][
+                    "Reconstruction_parameters"
+                ]["sb_units"].data.astype("float")
+            )
+
         if visualize:
             self.unwrapped_phase.plot()
 
