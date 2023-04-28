@@ -137,13 +137,29 @@ class ImageSet(ABC):
                     f"raw_data/imageset_{id_number}/metadata/{name_of_file}"
                 ] = NXfield(notes.read())
 
-    def set_axes(self, axe1_name: str, axe2_name: str, units, scale):
+    def set_axes(self, axe1_name: str, axe2_name: str, units, scale = None):
         self.image.axes_manager[0].name = axe1_name
         self.image.axes_manager[1].name = axe2_name
         self.image.axes_manager[0].units = units
         self.image.axes_manager[1].units = units
-        self.image.axes_manager[0].scale = scale
-        self.image.axes_manager[1].scale = scale
+        if scale is not None:
+            self.image.axes_manager[0].scale = scale
+            self.image.axes_manager[1].scale = scale
+        self.ref_image.axes_manager = self.image.axes_manager
+
+    @abstractmethod
+    def flip_axes(self, axes = 'x'):
+        images = [self.image, self.ref_image]
+        if axes == 'y':
+            for image in images:
+                image.data = np.flip(image.data, axis=0)
+        elif axes == 'x':
+            for image in images:
+                image.data = np.flip(image.data, axis=1)
+        elif axes == 'both':
+            for image in images:
+                image.data = np.flip(image.data, axis=0)
+                image.data = np.flip(image.data, axis=1)
 
 
 class ImageSetHolo(ImageSet):
@@ -326,6 +342,21 @@ class ImageSetHolo(ImageSet):
         if save_jpeg:
             self.unwrapped_phase.save(f"results/{name}.jpg")
 
+    def flip_axes(self, axes = 'x'):
+        images = [self.image, self.ref_image]
+        if self.wave_image:
+            images.append(self.wave_image)
+            images.append(self.unwrapped_phase)
+        if axes == 'y':
+            for image in images:
+                image.data = np.flip(image.data, axis=0)
+        elif axes == 'x':
+            for image in images:
+                image.data = np.flip(image.data, axis=1)
+        elif axes == 'both':
+            for image in images:
+                image.data = np.flip(image.data, axis=0)
+                image.data = np.flip(image.data, axis=1)
 
 class ImageSetXMCD(ImageSet):
     def __init__(self, image: Signal2D):
@@ -345,3 +376,6 @@ class ImageSetXMCD(ImageSet):
     @classmethod
     def load_from_nxs(cls, path, id_number=0):
         return super().load_from_nxs(path, id_number)
+    
+    def flip_axes(self, axes='x'):
+        return super().flip_axes(axes)
