@@ -284,7 +284,7 @@ class ImageSetHolo(ImageSet):
                 return cls(full_image, full_ref_image)
             return cls(full_image)
 
-    def phase_calculation(self, visualize=False, save_jpeg=False, name=None):
+    def phase_calculation(self, visualize=False, save_jpeg=False, path=None):
         sb_position = self.ref_image.estimate_sideband_position(
             ap_cb_radius=None, sb="upper"
         )
@@ -339,7 +339,7 @@ class ImageSetHolo(ImageSet):
             self.unwrapped_phase.plot()
 
         if save_jpeg:
-            self.unwrapped_phase.save(f"results/{name}.jpg")
+            self.unwrapped_phase.save(path)
 
     def flip_axes(self, axes="x"):
         images = [self.image, self.ref_image]
