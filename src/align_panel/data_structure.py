@@ -83,6 +83,13 @@ class ImageSet(ABC):
             else:
                 data_stored = [*opened_file["raw_data"]]
                 id_number = len(data_stored)
+                if (
+                    opened_file[
+                        f"raw_data/imageset_{id_number-1}/raw_images/image"
+                    ].shape
+                    != self.image.data.shape
+                ):
+                    print("The shape of the image is not the same as the previous one.")
             print(f"Image set is saved with id_number: {id_number}.")
             opened_file[f"raw_data/imageset_{id_number}"] = NXdata()
             opened_file[f"raw_data/imageset_{id_number}"].attrs[
@@ -105,7 +112,7 @@ class ImageSet(ABC):
                     f"raw_data/imageset_{id_number}/metadata/original_metadata"
                 ].nxdata
             )
-            full_image = HologramImage(
+            full_image = Signal2D(
                 image.data,
                 metadata=metadata,
                 original_metadata=original_metadata,
@@ -342,7 +349,9 @@ class ImageSetHolo(ImageSet):
             self.unwrapped_phase.save(path)
 
     def flip_axes(self, axes="x"):
-        images = [self.image, self.ref_image]
+        images = [self.image]
+        if self.ref_image:
+            images.append(self.ref_image)
         if self.wave_image:
             images.append(self.wave_image)
             images.append(self.unwrapped_phase)
