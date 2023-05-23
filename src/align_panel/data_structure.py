@@ -15,7 +15,7 @@ class ImageSet(ABC):
     def image(self):
         return self.images.get("image", None)
 
-    def __repr__(self):  #  review
+    def __repr__(self):
         return (
             f"{self.type_measurement} image set \n "
             f"image file name: {self.images['image'].metadata['General']['original_filename']}"
@@ -47,7 +47,7 @@ class ImageSet(ABC):
                         + opened_file["raw_data"][entry].attrs["type_measurement"]
                     )
 
-    def _save_image(self, key, file, id_number):  # private method, changed
+    def __save_image(self, key, file, id_number):  # private method, changed
         image = self.images[key]
         file[f"raw_data/imageset_{id_number}/raw_images/{key}"] = NXfield(
             image.data,
@@ -104,7 +104,7 @@ class ImageSet(ABC):
             ] = self.type_measurement
             opened_file[f"raw_data/imageset_{id_number}/raw_images"] = NXdata()
             opened_file[f"raw_data/imageset_{id_number}/metadata"] = NXdata()
-            self._save_image(file=opened_file, key=key_in, id_number=id_number)
+            self.__save_image(file=opened_file, key=key_in, id_number=id_number)
             return id_number
 
     @abstractclassmethod
@@ -253,9 +253,11 @@ class ImageSetHolo(ImageSet):
             opened_file[f"raw_data/imageset_{id_number}/raw_images"] = NXdata()
             opened_file[f"raw_data/imageset_{id_number}/metadata"] = NXdata()
             if key_in == "im+ref":
-                super()._save_image(file=opened_file, key="image", id_number=id_number)
+                self._ImageSet__save_image(
+                    file=opened_file, key="image", id_number=id_number
+                )
                 if self.images["ref_image"]:
-                    super()._save_image(
+                    self._ImageSet__save_image(
                         file=opened_file,
                         key="ref_image",
                         id_number=id_number,  # ask Matthiew about this
@@ -279,53 +281,59 @@ class ImageSetHolo(ImageSet):
                     )
 
     @classmethod
-    def load_from_nxs(cls, path, id_number=0):  # changed, working, review
-        with nxopen(path, "r") as opened_file:
-            image = opened_file[f"raw_data/imageset_{id_number}/raw_images/image"]
-            metadata = json.loads(
-                opened_file[
-                    f"raw_data/imageset_{id_number}/metadata/image_metadata"
-                ].nxdata
-            )
-            original_metadata = json.loads(
-                opened_file[
-                    f"raw_data/imageset_{id_number}/metadata/image_original_metadata"
-                ].nxdata
-            )
-            full_image = HologramImage(
-                image.data,
-                metadata=metadata,
-                original_metadata=original_metadata,
-            )
-            if "units" in image.attrs:
-                full_image.axes_manager[0].name = image.attrs["1_axe"]
-                full_image.axes_manager[1].name = image.attrs["2_axe"]
-                full_image.axes_manager[0].units = image.attrs["units"]
-                full_image.axes_manager[1].units = image.attrs["units"]
-                full_image.axes_manager[0].scale = image.attrs["scale"]
-                full_image.axes_manager[1].scale = image.attrs["scale"]
-            if "ref_image" in opened_file[f"raw_data/imageset_{id_number}/raw_images"]:
-                ref_image = opened_file[
-                    f"raw_data/imageset_{id_number}/raw_images/ref_image"
-                ].nxdata
-                ref_metadata = json.loads(
+    def load_from_nxs(
+        cls, path, key="img+ref", id_number=0
+    ):  # changed, working, review
+        if key == "img+ref":
+            with nxopen(path, "r") as opened_file:
+                image = opened_file[f"raw_data/imageset_{id_number}/raw_images/image"]
+                metadata = json.loads(
                     opened_file[
-                        f"raw_data/imageset_{id_number}/metadata/ref_image_metadata"
+                        f"raw_data/imageset_{id_number}/metadata/image_metadata"
                     ].nxdata
                 )
-                ref_original_metadata = json.loads(
+                original_metadata = json.loads(
                     opened_file[
-                        f"raw_data/imageset_{id_number}/metadata/ref_image_original_metadata"
+                        f"raw_data/imageset_{id_number}/metadata/image_original_metadata"
                     ].nxdata
                 )
-                full_ref_image = HologramImage(
-                    ref_image.data,
-                    metadata=ref_metadata,
-                    original_metadata=ref_original_metadata,
+                full_image = HologramImage(
+                    image.data,
+                    metadata=metadata,
+                    original_metadata=original_metadata,
                 )
-                full_ref_image.axes_manager = full_image.axes_manager
-                return cls(full_image, full_ref_image)
-            return cls(full_image)
+                if "units" in image.attrs:
+                    full_image.axes_manager[0].name = image.attrs["1_axe"]
+                    full_image.axes_manager[1].name = image.attrs["2_axe"]
+                    full_image.axes_manager[0].units = image.attrs["units"]
+                    full_image.axes_manager[1].units = image.attrs["units"]
+                    full_image.axes_manager[0].scale = image.attrs["scale"]
+                    full_image.axes_manager[1].scale = image.attrs["scale"]
+                if (
+                    "ref_image"
+                    in opened_file[f"raw_data/imageset_{id_number}/raw_images"]
+                ):
+                    ref_image = opened_file[
+                        f"raw_data/imageset_{id_number}/raw_images/ref_image"
+                    ].nxdata
+                    ref_metadata = json.loads(
+                        opened_file[
+                            f"raw_data/imageset_{id_number}/metadata/ref_image_metadata"
+                        ].nxdata
+                    )
+                    ref_original_metadata = json.loads(
+                        opened_file[
+                            f"raw_data/imageset_{id_number}/metadata/ref_image_original_metadata"
+                        ].nxdata
+                    )
+                    full_ref_image = HologramImage(
+                        ref_image.data,
+                        metadata=ref_metadata,
+                        original_metadata=ref_original_metadata,
+                    )
+                    full_ref_image.axes_manager = full_image.axes_manager
+                    return cls(full_image, full_ref_image)
+                return cls(full_image)
 
     def phase_calculation(self, visualize=False, save_jpeg=False, path=None):
         sb_position = self.ref_image.estimate_sideband_position(
