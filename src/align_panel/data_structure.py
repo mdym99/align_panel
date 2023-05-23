@@ -8,18 +8,24 @@ from hyperspy._signals.hologram_image import HologramImage, Signal2D
 
 class ImageSet(ABC):
     def __init__(self, image, type_measurement: str = None):
-        self.image = image
+        self.images = {"image": image}
         self.type_measurement = type_measurement
 
-    def __repr__(self):
+    @property
+    def image(self):
+        return self.images.get("image", None)
+
+    def __repr__(self):  #  review
         return (
             f"{self.type_measurement} image set \n "
-            f"image file name: {self.image.metadata['General']['original_filename']}"
-            f"\n  shape: {self.image.data.shape} \n "
+            f"image file name: {self.images['image'].metadata['General']['original_filename']}"
+            f"\n  shape: {self.images['image'].data.shape} \n "
         )
 
     @abstractclassmethod
     def load(cls, path):
+        if not isinstance(path, str):
+            raise TypeError("The path must be a string.")
         image = hs.load(path)
         if not image.metadata["General"]["title"]:
             image.metadata["General"]["title"] = image.metadata["General"][
@@ -41,41 +47,42 @@ class ImageSet(ABC):
                         + opened_file["raw_data"][entry].attrs["type_measurement"]
                     )
 
-    def save_image(self, file, id_number):
-        file[f"raw_data/imageset_{id_number}/raw_images/image"] = NXfield(
-            self.image.data,
-            name="image",
-            signal="image",
-            interpretation="image",
+    def _save_image(self, key, file, id_number):  # private method, changed
+        image = self.images[key]
+        file[f"raw_data/imageset_{id_number}/raw_images/{key}"] = NXfield(
+            image.data,
+            name=f"{key}",
+            signal=f"{key}",
+            interpretation=f"{key}",
         )
-        if str(self.image.axes_manager[0].units) == "<undefined>":
+        if str(image.axes_manager[0].units) == "<undefined>":
             print(
                 "The axes are not properly defined. Image is saved without axes information."
             )
         else:
-            file[f"raw_data/imageset_{id_number}/raw_images/image"].attrs[
+            file[f"raw_data/imageset_{id_number}/raw_images/{key}"].attrs[
                 "units"
-            ] = self.image.axes_manager[0].units
-            file[f"raw_data/imageset_{id_number}/raw_images/image"].attrs[
+            ] = image.axes_manager[0].units
+            file[f"raw_data/imageset_{id_number}/raw_images/{key}"].attrs[
                 "1_axe"
-            ] = self.image.axes_manager[0].name
-            file[f"raw_data/imageset_{id_number}/raw_images/image"].attrs[
+            ] = image.axes_manager[0].name
+            file[f"raw_data/imageset_{id_number}/raw_images/{key}"].attrs[
                 "2_axe"
-            ] = self.image.axes_manager[1].name
-            file[f"raw_data/imageset_{id_number}/raw_images/image"].attrs[
+            ] = image.axes_manager[1].name
+            file[f"raw_data/imageset_{id_number}/raw_images/{key}"].attrs[
                 "scale"
-            ] = self.image.axes_manager[0].scale
+            ] = image.axes_manager[0].scale
 
-        file[f"raw_data/imageset_{id_number}/metadata/metadata"] = NXfield(
-            json.dumps(self.image.metadata.as_dictionary())
+        file[f"raw_data/imageset_{id_number}/metadata/{key}_metadata"] = NXfield(
+            json.dumps(image.metadata.as_dictionary())
         )
 
-        file[f"raw_data/imageset_{id_number}/metadata/original_metadata"] = NXfield(
-            json.dumps(self.image.original_metadata.as_dictionary())
-        )
+        file[
+            f"raw_data/imageset_{id_number}/metadata/{key}_original_metadata"
+        ] = NXfield(json.dumps(image.original_metadata.as_dictionary()))
 
     @abstractmethod
-    def save(self, path, id_number=0):
+    def save(self, path, key_in: str = "image", id_number=0):  # changed, working
         with nxopen(path, "a") as opened_file:
             if "raw_data" not in opened_file:
                 id_number = 0
@@ -97,19 +104,21 @@ class ImageSet(ABC):
             ] = self.type_measurement
             opened_file[f"raw_data/imageset_{id_number}/raw_images"] = NXdata()
             opened_file[f"raw_data/imageset_{id_number}/metadata"] = NXdata()
-            self.save_image(file=opened_file, id_number=id_number)
+            self._save_image(file=opened_file, key=key_in, id_number=id_number)
             return id_number
 
     @abstractclassmethod
-    def load_from_nxs(cls, path, id_number=0):
+    def load_from_nxs(cls, path, key="image", id_number=0):  # changed, working
         with nxopen(path, "r") as opened_file:
-            image = opened_file[f"raw_data/imageset_{id_number}/raw_images/image"]
+            image = opened_file[f"raw_data/imageset_{id_number}/raw_images/{key}"]
             metadata = json.loads(
-                opened_file[f"raw_data/imageset_{id_number}/metadata/metadata"].nxdata
+                opened_file[
+                    f"raw_data/imageset_{id_number}/metadata/{key}_metadata"
+                ].nxdata
             )
             original_metadata = json.loads(
                 opened_file[
-                    f"raw_data/imageset_{id_number}/metadata/original_metadata"
+                    f"raw_data/imageset_{id_number}/metadata/{key}_original_metadata"
                 ].nxdata
             )
             full_image = Signal2D(
@@ -131,41 +140,40 @@ class ImageSet(ABC):
         return cls(full_image)
 
     @staticmethod
-    def delete_imageset_from_file(path, id_number=0):
+    def delete_imageset_from_file(path, id_number=0):  # no change
         with nxopen(path, "a") as opened_file:
             del opened_file[f"raw_data/imageset_{id_number}"]
 
     @staticmethod
-    def add_notes(path_notes, path_file, id_number=0):
+    def add_notes(path_notes, path_file, id_number=0):  # no change
         with nxopen(path_file, "a") as opened_file:
-            with open(path_notes, "r") as notes:
+            with open(path_notes, "r", encoding="UTF-8") as notes:
                 name_of_file = path_notes.split("/")[-1].split(".")[0]
                 opened_file[
                     f"raw_data/imageset_{id_number}/metadata/{name_of_file}"
                 ] = NXfield(notes.read())
 
     def set_axes(self, axe1_name: str, axe2_name: str, units, scale=None):
-        self.image.axes_manager[0].name = axe1_name
-        self.image.axes_manager[1].name = axe2_name
-        self.image.axes_manager[0].units = units
-        self.image.axes_manager[1].units = units
-        if scale is not None:
-            self.image.axes_manager[0].scale = scale
-            self.image.axes_manager[1].scale = scale
+        for image in self.images.values():
+            if image is not None:
+                image.axes_manager[0].name = axe1_name
+                image.axes_manager[1].name = axe2_name
+                image.axes_manager[0].units = units
+                image.axes_manager[1].units = units
+                if scale is not None:
+                    image.axes_manager[0].scale = scale
+                    image.axes_manager[1].scale = scale
 
-    @abstractmethod
     def flip_axes(self, axes="x"):
-        images = [self.image]
-        if axes == "y":
-            for image in images:
-                image.data = np.flip(image.data, axis=0)
-        elif axes == "x":
-            for image in images:
-                image.data = np.flip(image.data, axis=1)
-        elif axes == "both":
-            for image in images:
-                image.data = np.flip(image.data, axis=0)
-                image.data = np.flip(image.data, axis=1)
+        for image in self.images.values():
+            if image is not None:
+                if axes == "y":
+                    image.data = np.flip(image.data, axis=0)
+                elif axes == "x":
+                    image.data = np.flip(image.data, axis=1)
+                elif axes == "both":
+                    image.data = np.flip(image.data, axis=0)
+                    image.data = np.flip(image.data, axis=1)
 
 
 class ImageSetHolo(ImageSet):
@@ -185,75 +193,103 @@ class ImageSetHolo(ImageSet):
                 )
 
         super().__init__(image, type_measurement="holography")
-        self.ref_image = ref_image
-        self.wave_image = None
-        self.unwrapped_phase = None
+        self.images["ref_image"] = ref_image
+        self.images["wave_image"] = None  # do you need to define it in __init__?
+        self.images["unwrapped_phase"] = None  # do you need to define it in __init__?
 
-    def __repr__(self):
+    @property
+    def ref_image(self):
+        return self.images.get("ref_image", None)
+
+    @property
+    def wave_image(self):
+        return self.images.get("wave_image", None)
+
+    @property
+    def unwrapped_phase(self):
+        return self.images.get("unwrapped_phase", None)
+
+    def __repr__(self):  # review
         if self.ref_image:
             return (
                 super().__repr__()
-                + f"reference file name: {self.ref_image.metadata['General']['original_filename']}"
-                f" \n  shape: {self.ref_image.data.shape} \n "
+                + f"reference file name: {self.images['ref_image'].metadata['General']['original_filename']}"
+                f" \n  shape: {self.images['ref_image'].data.shape} \n "
             )
         return super().__repr__() + "no reference image is loaded \n "
 
     @classmethod
     def load(cls, path, path_ref=None):
+        if not isinstance(path, str):
+            raise TypeError("The path must be a string.")
         image = hs.load(path, signal_type="hologram")
         if path_ref:
+            if not isinstance(path_ref, str):
+                raise TypeError("The path must be a string.")
             ref_image = hs.load(path_ref, signal_type="hologram")
             return cls(image, ref_image)
         return cls(image)
 
-    def save_ref_image(self, opened_file, id_number):
-        if self.ref_image:
-            opened_file[
-                f"raw_data/imageset_{id_number}/raw_images/ref_image"
-            ] = NXfield(
-                self.ref_image.data,
-                name="ref_image",
-                units="pixesl",
-                signal="image",
-                interpretation="image",
-            )
-            opened_file[
-                f"raw_data/imageset_{id_number}/metadata/ref_metadata"
-            ] = NXfield(json.dumps(self.ref_image.metadata.as_dictionary()))
-            opened_file[
-                f"raw_data/imageset_{id_number}/metadata/ref_original_metadata"
-            ] = NXfield(json.dumps(self.ref_image.original_metadata.as_dictionary()))
-        elif not self.ref_image and id_number == 0:
-            print("No reference image is saved or already saved.")
-        elif not self.ref_image and id_number > 0:
-            print("The link to the previous reference image is saved.")
-            opened_file[f"raw_data/imageset_{id_number}/raw_images/ref_image"] = NXlink(
-                f"raw_data/imageset_{id_number-1}/raw_images/ref_image"
-            )
-            opened_file[
-                f"raw_data/imageset_{id_number}/metadata/ref_metadata"
-            ] = NXlink(f"raw_data/imageset_{id_number-1}/metadata/ref_metadata")
-            opened_file[
-                f"raw_data/imageset_{id_number}/metadata/ref_original_metadata"
-            ] = NXlink(
-                f"raw_data/imageset_{id_number-1}/metadata/ref_original_metadata"
-            )
-
-    def save(self, path, id_number=0):
-        id_number = super().save(path, id_number)
+    def save(self, path, key_in="im+ref", id_number=0):  # changed, working, review
         with nxopen(path, "a") as opened_file:
-            self.save_ref_image(opened_file, id_number)
+            if "raw_data" not in opened_file:
+                id_number = 0
+                opened_file["raw_data"] = NXentry()
+            else:
+                data_stored = [*opened_file["raw_data"]]
+                id_number = len(data_stored)
+                if (
+                    opened_file[
+                        f"raw_data/imageset_{id_number-1}/raw_images/image"
+                    ].shape
+                    != self.image.data.shape
+                ):
+                    print("The shape of the image is not the same as the previous one.")
+            print(f"Image set is saved with id_number: {id_number}.")
+            opened_file[f"raw_data/imageset_{id_number}"] = NXdata()
+            opened_file[f"raw_data/imageset_{id_number}"].attrs[
+                "type_measurement"
+            ] = self.type_measurement
+            opened_file[f"raw_data/imageset_{id_number}/raw_images"] = NXdata()
+            opened_file[f"raw_data/imageset_{id_number}/metadata"] = NXdata()
+            if key_in == "im+ref":
+                super()._save_image(file=opened_file, key="image", id_number=id_number)
+                if self.images["ref_image"]:
+                    super()._save_image(
+                        file=opened_file,
+                        key="ref_image",
+                        id_number=id_number,  # ask Matthiew about this
+                    )
+                elif not self.images["ref_image"] and id_number == 0:
+                    print("No reference image is saved or already saved.")
+                elif not self.images["ref_image"] and id_number > 0:
+                    print("The link to the previous reference image is saved.")
+                    opened_file[
+                        f"raw_data/imageset_{id_number}/raw_images/ref_image"
+                    ] = NXlink(f"raw_data/imageset_{id_number-1}/raw_images/ref_image")
+                    opened_file[
+                        f"raw_data/imageset_{id_number}/metadata/ref_image_metadata"
+                    ] = NXlink(
+                        f"raw_data/imageset_{id_number-1}/metadata/ref_image_metadata"
+                    )
+                    opened_file[
+                        f"raw_data/imageset_{id_number}/metadata/ref_image_original_metadata"
+                    ] = NXlink(
+                        f"raw_data/imageset_{id_number-1}/metadata/ref_image_original_metadata"
+                    )
 
     @classmethod
-    def load_from_nxs(cls, path, id_number=0):
+    def load_from_nxs(cls, path, id_number=0):  # changed, working, review
         with nxopen(path, "r") as opened_file:
             image = opened_file[f"raw_data/imageset_{id_number}/raw_images/image"]
             metadata = json.loads(
-                opened_file[f"raw_data/imageset_{id_number}/metadata/metadata"].nxdata
+                opened_file[
+                    f"raw_data/imageset_{id_number}/metadata/image_metadata"
+                ].nxdata
             )
             original_metadata = json.loads(
                 opened_file[
-                    f"raw_data/imageset_{id_number}/metadata/original_metadata"
+                    f"raw_data/imageset_{id_number}/metadata/image_original_metadata"
                 ].nxdata
             )
             full_image = HologramImage(
@@ -274,12 +310,12 @@ class ImageSetHolo(ImageSet):
                 ].nxdata
                 ref_metadata = json.loads(
                     opened_file[
-                        f"raw_data/imageset_{id_number}/metadata/ref_metadata"
+                        f"raw_data/imageset_{id_number}/metadata/ref_image_metadata"
                     ].nxdata
                 )
                 ref_original_metadata = json.loads(
                     opened_file[
-                        f"raw_data/imageset_{id_number}/metadata/ref_original_metadata"
+                        f"raw_data/imageset_{id_number}/metadata/ref_image_original_metadata"
                     ].nxdata
                 )
                 full_ref_image = HologramImage(
@@ -297,13 +333,13 @@ class ImageSetHolo(ImageSet):
         )
         sb_size = self.ref_image.estimate_sideband_size(sb_position)
 
-        self.wave_image = self.image.reconstruct_phase(
+        self.images["wave_image"] = self.image.reconstruct_phase(
             self.ref_image,
             sb_position=sb_position,
             sb_size=sb_size,
             output_shape=np.shape(self.image.data),
         )
-        self.unwrapped_phase = self.wave_image.unwrapped_phase()
+        self.images["unwrapped_phase"] = self.wave_image.unwrapped_phase()
         self.image.metadata["Signal"]["Holography"] = self.wave_image.metadata[
             "Signal"
         ]["Holography"]
@@ -343,33 +379,10 @@ class ImageSetHolo(ImageSet):
             )
 
         if visualize:
-            self.unwrapped_phase.plot()
+            self.images["unwrapped_phase"].plot()
 
         if save_jpeg:
-            self.unwrapped_phase.save(path)
-
-    def flip_axes(self, axes="x"):
-        images = [self.image]
-        if self.ref_image:
-            images.append(self.ref_image)
-        if self.wave_image:
-            images.append(self.wave_image)
-            images.append(self.unwrapped_phase)
-        if axes == "y":
-            for image in images:
-                image.data = np.flip(image.data, axis=0)
-        elif axes == "x":
-            for image in images:
-                image.data = np.flip(image.data, axis=1)
-        elif axes == "both":
-            for image in images:
-                image.data = np.flip(image.data, axis=0)
-                image.data = np.flip(image.data, axis=1)
-
-    def set_axes(self, axe1_name: str, axe2_name: str, units, scale=None):
-        super().set_axes(axe1_name, axe2_name, units, scale)
-        if self.ref_image is not None:
-            self.ref_image.axes_manager = self.image.axes_manager
+            self.images["unwrapped_phase"].save(path)
 
 
 class ImageSetXMCD(ImageSet):
@@ -384,12 +397,9 @@ class ImageSetXMCD(ImageSet):
     def load(cls, path):
         return super().load(path)
 
-    def save(self, path, id_number=0):
-        super().save(path, id_number)
+    def save(self, path, key_in="image", id_number=0):
+        super().save(path, key_in, id_number)
 
     @classmethod
-    def load_from_nxs(cls, path, id_number=0):
-        return super().load_from_nxs(path, id_number)
-
-    def flip_axes(self, axes="x"):
-        super().flip_axes(axes)
+    def load_from_nxs(cls, path, key="image", id_number=0):
+        return super().load_from_nxs(path, key, id_number)
