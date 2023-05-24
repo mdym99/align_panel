@@ -81,31 +81,32 @@ class ImageSet(ABC):
             f"raw_data/imageset_{id_number}/metadata/{key}_original_metadata"
         ] = NXfield(json.dumps(image.original_metadata.as_dictionary()))
 
+    def __file_prep(self, file):
+        if "raw_data" not in file:
+            id_number = 0
+            file["raw_data"] = NXentry()
+        else:
+            data_stored = [*file["raw_data"]]
+            id_number = len(data_stored)
+            if (
+                file[f"raw_data/imageset_{id_number-1}/raw_images/image"].shape
+                != self.image.data.shape
+            ):
+                print(f"The shapes of the images are not the same with the previous ones.")
+        print(f"Image set is saved with id_number: {id_number}.")
+        file[f"raw_data/imageset_{id_number}"] = NXdata()
+        file[f"raw_data/imageset_{id_number}"].attrs[
+            "type_measurement"
+        ] = self.type_measurement
+        file[f"raw_data/imageset_{id_number}/raw_images"] = NXdata()
+        file[f"raw_data/imageset_{id_number}/metadata"] = NXdata()
+        return id_number
+
     @abstractmethod
-    def save(self, path, key_in: str = "image", id_number=0):  # changed, working
+    def save(self, path):
         with nxopen(path, "a") as opened_file:
-            if "raw_data" not in opened_file:
-                id_number = 0
-                opened_file["raw_data"] = NXentry()
-            else:
-                data_stored = [*opened_file["raw_data"]]
-                id_number = len(data_stored)
-                if (
-                    opened_file[
-                        f"raw_data/imageset_{id_number-1}/raw_images/image"
-                    ].shape
-                    != self.image.data.shape
-                ):
-                    print("The shape of the image is not the same as the previous one.")
-            print(f"Image set is saved with id_number: {id_number}.")
-            opened_file[f"raw_data/imageset_{id_number}"] = NXdata()
-            opened_file[f"raw_data/imageset_{id_number}"].attrs[
-                "type_measurement"
-            ] = self.type_measurement
-            opened_file[f"raw_data/imageset_{id_number}/raw_images"] = NXdata()
-            opened_file[f"raw_data/imageset_{id_number}/metadata"] = NXdata()
-            self.__save_image(file=opened_file, key=key_in, id_number=id_number)
-            return id_number
+            id_number = self.__file_prep(opened_file)
+            self.__save_image(file=opened_file, key="image", id_number=id_number)
 
     @abstractclassmethod
     def load_from_nxs(cls, path, key="image", id_number=0):  # changed, working
@@ -213,7 +214,7 @@ class ImageSetHolo(ImageSet):
         if self.ref_image:
             return (
                 super().__repr__()
-                + f"reference file name: {self.images['ref_image'].metadata['General']['original_filename']}"
+                + f"reference file name: {self.ref_image.metadata['General']['original_filename']}"
                 f" \n  shape: {self.images['ref_image'].data.shape} \n "
             )
         return super().__repr__() + "no reference image is loaded \n "
@@ -230,55 +231,36 @@ class ImageSetHolo(ImageSet):
             return cls(image, ref_image)
         return cls(image)
 
-    def save(self, path, key_in="im+ref", id_number=0):  # changed, working, review
+    def __save_ref_image(self, file, id_number):
+        if self.images["ref_image"]:
+            self._ImageSet__save_image(
+                file=file,
+                key="ref_image",
+                id_number=id_number,  # ask Matthiew about this
+            )
+        elif not self.images["ref_image"] and id_number == 0:
+            print("No reference image is saved or already saved.")
+        elif not self.images["ref_image"] and id_number > 0:
+            print("The link to the previous reference image is saved.")
+            file[f"raw_data/imageset_{id_number}/raw_images/ref_image"] = NXlink(
+                f"raw_data/imageset_{id_number-1}/raw_images/ref_image"
+            )
+            file[f"raw_data/imageset_{id_number}/metadata/ref_image_metadata"] = NXlink(
+                f"raw_data/imageset_{id_number-1}/metadata/ref_image_metadata"
+            )
+            file[
+                f"raw_data/imageset_{id_number}/metadata/ref_image_original_metadata"
+            ] = NXlink(
+                f"raw_data/imageset_{id_number-1}/metadata/ref_image_original_metadata"
+            )
+
+    def save(self, path):  # changed, working, review
         with nxopen(path, "a") as opened_file:
-            if "raw_data" not in opened_file:
-                id_number = 0
-                opened_file["raw_data"] = NXentry()
-            else:
-                data_stored = [*opened_file["raw_data"]]
-                id_number = len(data_stored)
-                if (
-                    opened_file[
-                        f"raw_data/imageset_{id_number-1}/raw_images/image"
-                    ].shape
-                    != self.image.data.shape
-                ):
-                    print("The shape of the image is not the same as the previous one.")
-            print(f"Image set is saved with id_number: {id_number}.")
-            opened_file[f"raw_data/imageset_{id_number}"] = NXdata()
-            opened_file[f"raw_data/imageset_{id_number}"].attrs[
-                "type_measurement"
-            ] = self.type_measurement
-            opened_file[f"raw_data/imageset_{id_number}/raw_images"] = NXdata()
-            opened_file[f"raw_data/imageset_{id_number}/metadata"] = NXdata()
-            if key_in == "im+ref":
-                self._ImageSet__save_image(
-                    file=opened_file, key="image", id_number=id_number
-                )
-                if self.images["ref_image"]:
-                    self._ImageSet__save_image(
-                        file=opened_file,
-                        key="ref_image",
-                        id_number=id_number,  # ask Matthiew about this
-                    )
-                elif not self.images["ref_image"] and id_number == 0:
-                    print("No reference image is saved or already saved.")
-                elif not self.images["ref_image"] and id_number > 0:
-                    print("The link to the previous reference image is saved.")
-                    opened_file[
-                        f"raw_data/imageset_{id_number}/raw_images/ref_image"
-                    ] = NXlink(f"raw_data/imageset_{id_number-1}/raw_images/ref_image")
-                    opened_file[
-                        f"raw_data/imageset_{id_number}/metadata/ref_image_metadata"
-                    ] = NXlink(
-                        f"raw_data/imageset_{id_number-1}/metadata/ref_image_metadata"
-                    )
-                    opened_file[
-                        f"raw_data/imageset_{id_number}/metadata/ref_image_original_metadata"
-                    ] = NXlink(
-                        f"raw_data/imageset_{id_number-1}/metadata/ref_image_original_metadata"
-                    )
+            id_number = self._ImageSet__file_prep(opened_file)
+            self._ImageSet__save_image(
+                file=opened_file, key="image", id_number=id_number
+            )
+            self.__save_ref_image(file=opened_file, id_number=id_number)
 
     @classmethod
     def load_from_nxs(
@@ -405,8 +387,8 @@ class ImageSetXMCD(ImageSet):
     def load(cls, path):
         return super().load(path)
 
-    def save(self, path, key_in="image", id_number=0):
-        super().save(path, key_in, id_number)
+    def save(self, path):
+        super().save(path)
 
     @classmethod
     def load_from_nxs(cls, path, key="image", id_number=0):
