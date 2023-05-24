@@ -47,7 +47,7 @@ class ImageSet(ABC):
                         + opened_file["raw_data"][entry].attrs["type_measurement"]
                     )
 
-    def __save_image(self, key, file, id_number):  # private method, changed
+    def __save_image(self, key, file, id_number):  # discuss the use of private method
         image = self.images[key]
         file[f"raw_data/imageset_{id_number}/raw_images/{key}"] = NXfield(
             image.data,
@@ -140,7 +140,7 @@ class ImageSet(ABC):
         return full_image
 
     @abstractclassmethod
-    def load_from_nxs(cls, path, id_number=0):  # changed, working
+    def load_from_nxs(cls, path, id_number=0):
         with nxopen(path, "r") as opened_file:
             image = cls.__load_image_from_nxs(
                 file=opened_file, key="image", id_number=id_number
@@ -148,12 +148,12 @@ class ImageSet(ABC):
             return cls(image)
 
     @staticmethod
-    def delete_imageset_from_file(path, id_number=0):  # no change
+    def delete_imageset_from_file(path, id_number=0):
         with nxopen(path, "a") as opened_file:
             del opened_file[f"raw_data/imageset_{id_number}"]
 
     @staticmethod
-    def add_notes(path_notes, path_file, id_number=0):  # no change
+    def add_notes(path_notes, path_file, id_number=0):
         with nxopen(path_file, "a") as opened_file:
             with open(path_notes, "r", encoding="UTF-8") as notes:
                 name_of_file = path_notes.split("/")[-1].split(".")[0]
@@ -217,7 +217,7 @@ class ImageSetHolo(ImageSet):
     def unwrapped_phase(self):
         return self.images.get("unwrapped_phase", None)
 
-    def __repr__(self):  # review
+    def __repr__(self):
         if self.ref_image:
             return (
                 super().__repr__()
@@ -243,7 +243,7 @@ class ImageSetHolo(ImageSet):
             self._ImageSet__save_image(
                 file=file,
                 key="ref_image",
-                id_number=id_number,  # ask Matthiew about this
+                id_number=id_number,  # disscuss the use of private method
             )
         elif not self.images["ref_image"] and id_number == 0:
             print("No reference image is saved or already saved.")
@@ -270,7 +270,9 @@ class ImageSetHolo(ImageSet):
             self.__save_ref_image(file=opened_file, id_number=id_number)
 
     @staticmethod
-    def __load_image_from_nxs(file, key, id_number):
+    def __load_image_from_nxs(
+        file, key, id_number
+    ):  # discuss, is there the need to redefine it just because of HologramImage instead of Signal2D?
         image = file[f"raw_data/imageset_{id_number}/raw_images/{key}"]
         metadata = json.loads(
             file[f"raw_data/imageset_{id_number}/metadata/{key}_metadata"].nxdata
@@ -299,7 +301,7 @@ class ImageSetHolo(ImageSet):
         return full_image
 
     @classmethod
-    def load_from_nxs(cls, path, id_number=0):  # changed, working, review
+    def load_from_nxs(cls, path, id_number=0):
         with nxopen(path, "r") as opened_file:
             full_image = cls.__load_image_from_nxs(
                 file=opened_file, key="image", id_number=id_number
