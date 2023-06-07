@@ -140,10 +140,6 @@ autocorr_udf/
 .vscode/
 *.dm3
 *.h5
-test_data/
-test*
-t_*.py
-t_*.*
 
 # folders
 data/
@@ -153,3 +149,4 @@ results/
 
 pokus.ipynb
 try_private.ipynb
+run_test_points.py
