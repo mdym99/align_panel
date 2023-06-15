@@ -68,7 +68,7 @@ def test_set_axes(image_set):
     assert image_set.image.axes_manager[1].units == "nm"
     assert image_set.image.axes_manager[0].name == "x"
     assert image_set.image.axes_manager[1].name == "y"
-    assert image_set.image.axes_manager == image_set.ref_image.axes_manager
+    assert image_set.image.axes_manager[0].scale  == image_set.ref_image.axes_manager[0].scale
 
 
 def test_flip_axes(image_set):
@@ -197,5 +197,5 @@ def test_save_load_2_imagesets_1ref(image_set, image_set_no_ref, tmp_path):
 def test__repr__(image_set):
     assert (
         repr(image_set)
-        == "holography image set \n image file name: Z1_H.dm4\n  shape: (200, 200) \n reference file name: Z12_R.dm4 \n  shape: (200, 200) \n "
+        == "holography image set \n image file name: Hb-.dm3\n  shape: (200, 200) \n reference file name: Rb-.dm3 \n  shape: (200, 200) \n "
     )

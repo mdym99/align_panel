@@ -8,22 +8,22 @@ import pytest
 
 @pytest.fixture(scope="session")
 def path1():
-    return "data/HoloSatNegative/Z1_H.dm4"
+    return "data/Hb-.dm3"
 
 
 @pytest.fixture(scope="session")
 def path2():
-    return "data/HoloSatNegative/Z12_R.dm4"
+    return "data/Rb-.dm3"
 
 
 @pytest.fixture(scope="session")
 def path3():
-    return "data/HoloSatPositive/Z1_H.dm4"
+    return "data/Hb+.dm3"
 
 
 @pytest.fixture(scope="session")
 def path4():
-    return "data/HoloSatPositive/Z1et2_R.dm4"
+    return "data/Rb+.dm3"
 
 
 @pytest.fixture(scope="session")

@@ -161,27 +161,30 @@ class ImageSet(ABC):
                     f"raw_data/imageset_{id_number}/metadata/{name_of_file}"
                 ] = NXfield(notes.read())
 
-    def set_axes(self, axe1_name: str, axe2_name: str, units, scale=None):
+    def images_content(self):
         for image in self.images.values():
             if image is not None:
-                image.axes_manager[0].name = axe1_name
-                image.axes_manager[1].name = axe2_name
-                image.axes_manager[0].units = units
-                image.axes_manager[1].units = units
-                if scale is not None:
-                    image.axes_manager[0].scale = scale
-                    image.axes_manager[1].scale = scale
+                yield image
+
+    def set_axes(self, axe1_name: str, axe2_name: str, units, scale=None):
+        for image in self.images_content():
+            image.axes_manager[0].name = axe1_name
+            image.axes_manager[1].name = axe2_name
+            image.axes_manager[0].units = units
+            image.axes_manager[1].units = units
+            if scale is not None:
+                image.axes_manager[0].scale = scale
+                image.axes_manager[1].scale = scale
 
     def flip_axes(self, axes="x"):
-        for image in self.images.values():
-            if image is not None:
-                if axes == "y":
-                    image.data = np.flip(image.data, axis=0)
-                elif axes == "x":
-                    image.data = np.flip(image.data, axis=1)
-                elif axes == "both":
-                    image.data = np.flip(image.data, axis=0)
-                    image.data = np.flip(image.data, axis=1)
+        for image in self.images_content():
+            if axes == "y":
+                image.data = np.flip(image.data, axis=0)
+            elif axes == "x":
+                image.data = np.flip(image.data, axis=1)
+            elif axes == "both":
+                image.data = np.flip(image.data, axis=0)
+                image.data = np.flip(image.data, axis=1)
 
 
 class ImageSetHolo(ImageSet):
