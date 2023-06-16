@@ -84,7 +84,7 @@ def test_set_axes(image_set):
 def test_flip_axes(image_set):
     original_image = image_set.image.data
     original_ref_image = image_set.ref_image.data
-    image_set.flip_axes(axes="y")
+    image_set.flip_axes(axis="y")
     assert image_set.image.data.all() == np.flip(original_image, axis=0).all()
     assert image_set.ref_image.data.all() == np.flip(original_ref_image, axis=0).all()
 

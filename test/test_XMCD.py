@@ -73,7 +73,7 @@ def test_load_save(image_set_xmcd, tmp_path):
 
 def test_flip_axes(image_set_xmcd):
     original_image = image_set_xmcd.image.data
-    image_set_xmcd.flip_axes(axes="y")
+    image_set_xmcd.flip_axes(axis="y")
     assert image_set_xmcd.image.data.all() == np.flip(original_image, axis=0).all()
 
 

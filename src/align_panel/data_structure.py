@@ -113,7 +113,7 @@ class ImageSet(ABC):
             signal=f"{key}",
             interpretation=f"{key}",
         )
-        if str(image.axes_manager[0].units) == "<undefined>":
+        if str(image.axes_manager[0].units) == "<undefined>": #more uniform way is needed
             print(
                 "The axes are not properly defined. Image is saved without axes information."
             )
@@ -122,10 +122,10 @@ class ImageSet(ABC):
                 "units"
             ] = image.axes_manager[0].units
             file[f"raw_data/imageset_{id_number}/raw_images/{key}"].attrs[
-                "1_axe"
+                "1_axis"
             ] = image.axes_manager[0].name
             file[f"raw_data/imageset_{id_number}/raw_images/{key}"].attrs[
-                "2_axe"
+                "2_axis"
             ] = image.axes_manager[1].name
             file[f"raw_data/imageset_{id_number}/raw_images/{key}"].attrs[
                 "scale"
@@ -185,8 +185,8 @@ class ImageSet(ABC):
             original_metadata=original_metadata,
         )
         if "units" in image.attrs:
-            full_image.axes_manager[0].name = image.attrs["1_axe"]
-            full_image.axes_manager[1].name = image.attrs["2_axe"]
+            full_image.axes_manager[0].name = image.attrs["1_axis"]
+            full_image.axes_manager[1].name = image.attrs["2_axis"]
             full_image.axes_manager[0].units = image.attrs["units"]
             full_image.axes_manager[1].units = image.attrs["units"]
             full_image.axes_manager[0].scale = image.attrs["scale"]
@@ -224,23 +224,23 @@ class ImageSet(ABC):
             if image is not None:
                 yield image
 
-    def set_axes(self, axe1_name: str, axe2_name: str, units, scale=None):
+    def set_axes(self, axis1_name: str, axis2_name: str, units, scale=None):
         for image in self.images_content():
-            image.axes_manager[0].name = axe1_name
-            image.axes_manager[1].name = axe2_name
+            image.axes_manager[0].name = axis1_name
+            image.axes_manager[1].name = axis2_name
             image.axes_manager[0].units = units
             image.axes_manager[1].units = units
             if scale is not None:
                 image.axes_manager[0].scale = scale
                 image.axes_manager[1].scale = scale
 
-    def flip_axes(self, axes="x"):
+    def flip_axes(self, axis="x"):
         for image in self.images_content():
-            if axes == "y":
+            if axis == "y":
                 image.data = np.flip(image.data, axis=0)
-            elif axes == "x":
+            elif axis == "x":
                 image.data = np.flip(image.data, axis=1)
-            elif axes == "both":
+            elif axis == "both":
                 image.data = np.flip(image.data, axis=0)
                 image.data = np.flip(image.data, axis=1)
 
@@ -349,8 +349,8 @@ class ImageSetHolo(ImageSet):
             original_metadata=original_metadata,
         )
         if "units" in image.attrs:
-            full_image.axes_manager[0].name = image.attrs["1_axe"]
-            full_image.axes_manager[1].name = image.attrs["2_axe"]
+            full_image.axes_manager[0].name = image.attrs["1_axis"]
+            full_image.axes_manager[1].name = image.attrs["2_axis"]
             full_image.axes_manager[0].units = image.attrs["units"]
             full_image.axes_manager[1].units = image.attrs["units"]
             full_image.axes_manager[0].scale = image.attrs["scale"]
