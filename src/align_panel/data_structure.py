@@ -1,5 +1,10 @@
-import json
-from abc import ABC, abstractclassmethod, abstractmethod
+"""
+    This module contains the classes that define the data structure of the imagesets for 
+    Electron Holography and XMCD measurements. Saving and loading procedures are defined
+    for both types of measurements. The saved files are based on the NeXus format.
+"""
+import json 
+from abc import ABC, abstractclassmethod, abstractmethod 
 import hyperspy.io as hs
 import numpy as np
 from nexusformat.nexus import NXdata, NXentry, NXfield, NXlink, nxopen
@@ -7,6 +12,59 @@ from hyperspy._signals.hologram_image import HologramImage, Signal2D
 
 
 class ImageSet(ABC):
+    """
+    An abstract parent class for the data structure of the imagesets.
+
+    Attributes
+    ----------
+    images : dict
+        A dictionary containing the images of the imageset. The keys are the names of the images.
+    
+    type_measurement : str
+        The type of the measurement. It is used as an attribute of the NXdata group in the NeXus file.
+
+    Methods
+    -------
+    load(path)
+        Loads the image from the path and creates an ImageSet object.
+
+    show_content(path, scope="short")
+        Prints the content of the NeXus file. The scope can be "short" or "full".
+
+    __save_image(key, file, id_number)
+        Method to save the image inside the NeXus file. It is used by the save method.
+        Key is the name of the image, file is the NeXus file and id_number is the number of the imageset.
+    
+    __file_prep(file)
+        Method to prepare the NeXus file for saving the imageset. It is used by the save method.
+        File is the NeXus file.
+    
+    save(path)
+        Saves the imageset in the NeXus file. It utilizes the __save_image and __file_prep methods.
+        Path is the path of the NeXus file.
+
+    __load_image_from_nxs(file, key, id_number)
+        Method to load the image from the NeXus file. It is used by the load_from_nxs method.
+        File is the NeXus file, key is the name of the image and id_number is the number of the imageset.
+
+    load_from_nxs(path, id_number=0)
+        Loads the imageset from the NeXus file. It utilizes the __load_image_from_nxs method.
+        Path is the path of the NeXus file and id_number is the number of the imageset.
+    
+    delete_imageset_from_file(path, id_number=0)
+        Deletes the imageset from the NeXus file.
+        Path is the path of the NeXus file and id_number is the number of the imageset.
+
+    add_notes(path_notes, path_file, id_number=0)
+        Adds notes to the NeXus file.
+        Path_notes is the path of the file containing the notes, path_file is the path of the NeXus file 
+        and id_number is the number of the imageset.
+    
+    images_content()
+        Generator that yields the images of the imageset.
+    
+
+    """
     def __init__(self, image, type_measurement: str = None):
         self.images = {"image": image}
         self.type_measurement = type_measurement
@@ -93,7 +151,7 @@ class ImageSet(ABC):
                 != self.image.data.shape
             ):
                 print(
-                    f"The shapes of the images are not the same with the previous ones."
+                    "The shapes of the images are not the same with the previous ones."
                 )
         print(f"Image set is saved with id_number: {id_number}.")
         file[f"raw_data/imageset_{id_number}"] = NXdata()
