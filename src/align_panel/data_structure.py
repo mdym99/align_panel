@@ -1,7 +1,6 @@
 """
-    This module contains the classes that define the data structure of the imagesets for 
-    Electron Holography and XMCD measurements. Saving and loading procedures are defined
-    for both types of measurements. The saved files are based on the NeXus format.
+    This module contains classes that define the data structure of the imagesets.
+    Saving and loading procedures are defined, the saved files are based on the NeXus format.
 """
 import json
 from abc import ABC, abstractclassmethod, abstractmethod
@@ -15,6 +14,8 @@ class ImageSet(ABC):
     """
     An abstract parent class for the data structure of the imagesets.
 
+    The child classes are ImageSetHolo and ImageSetXMCD.
+
     Attributes
     ----------
     images : dict
@@ -27,53 +28,52 @@ class ImageSet(ABC):
     Methods
     -------
     load(path)
-        Loads the image from the path and creates an ImageSet object.
+        Loads the image from the path and returns an instance of ImageSet object.
 
     show_content(path, scope="short")
         Prints the content of the NeXus file. The scope can be "short" or "full".
 
     __save_image(key, file, id_number)
         Method to save the image inside the NeXus file. It is used by the save method.
-        Key is the name of the image, file is the NeXus file and id_number is the number 
+        Key is the name of the image, file is the NeXus file and id_number is the order number 
         of the imageset.
 
     __file_prep(file)
-        Method to prepare the NeXus file for saving the imageset. It is used by the save method.
-        File is the NeXus file.
+        Method to prepare the NeXus file for saving of the imageset. It is used by the save method.
+        File is the opened NeXus file, in which imageset is saved.
 
     save(path)
         Saves the imageset in the NeXus file. It utilizes the __save_image and __file_prep methods.
-        Path is the path of the NeXus file.
+        Path is the path of the NeXus file, in which imageset is saved.
 
     __load_image_from_nxs(file, key, id_number)
-        Method to load the image from the NeXus file. It is used by the load_from_nxs method.
-        File is the NeXus file, key is the name of the image and id_number is the number 
+        Method to load image from the NeXus file. It is used by the load_from_nxs method.
+        File is the opened NeXus file, key is the name of the image and id_number is the order number 
         of the imageset.
 
     load_from_nxs(path, id_number=0)
         Loads the imageset from the NeXus file. It utilizes the __load_image_from_nxs method.
-        Path is the path of the NeXus file and id_number is the number of the imageset.
+        Path is the path of the NeXus file and id_number is the order number of the imageset.
 
     delete_imageset_from_file(path, id_number=0)
         Deletes the imageset from the NeXus file.
-        Path is the path of the NeXus file and id_number is the number of the imageset.
+        Path is the path of the NeXus file and id_number is the order number of the imageset.
 
     add_notes(path_notes, path_file, id_number=0)
         Adds notes to the NeXus file.
         Path_notes is the path of the file containing the notes, path_file is the path 
-        of the NeXus file
-        and id_number is the number of the imageset.
+        of the NeXus file and id_number is the order number of the imageset.
 
     images_content()
-        Generator that yields the images of the imageset.
+        Generator that yields the images of the imageset, that are created.
 
     set_axes(axis1_name: str, axis2_name: str, units, scale=None)
-        Sets the axes of the images of the imageset.
+        Sets the axes of all the images of the imageset.
         Axis1_name is the name of the first axis, axis2_name is the name of the second axis,
         units is the units of the axes and scale is the scale of the axes.
 
-    flip_axes(axis="x")
-        Flips the axes of the images of the imageset.
+    flip_axes(axis="y")
+        Flips the axes of all the images of the imageset.
         Axis is the axis to be flipped. It can be "x", "y" or "both".
 
     """
@@ -113,7 +113,7 @@ class ImageSet(ABC):
     @abstractclassmethod
     def load(cls, path: str):
         """
-        Class method that loads the image from the path and creates an ImageSet object.
+        Class method that loads the image from the path and returns an instance of ImageSet object.
 
         Parameters
         ----------
@@ -122,7 +122,7 @@ class ImageSet(ABC):
 
         Returns
         -------
-        A ImageSet object containing the image and its metadata.
+        An instance of ImageSet object containing the image and its metadata.
         The image is loaded with the help of the hyperspy library.
 
         Raises
@@ -450,8 +450,8 @@ class ImageSetHolo(ImageSet):
 
         super().__init__(image, type_measurement="holography")
         self.images["ref_image"] = ref_image
-        self.images["wave_image"] = None  # do you need to define it in __init__?
-        self.images["unwrapped_phase"] = None  # do you need to define it in __init__?
+        self.images["wave_image"] = None  
+        self.images["unwrapped_phase"] = None 
 
     @property
     def ref_image(self):
@@ -470,7 +470,7 @@ class ImageSetHolo(ImageSet):
             return (
                 super().__repr__()
                 + f"reference file name: {self.ref_image.metadata['General']['original_filename']}"
-                f" \n  shape: {self.images['ref_image'].data.shape} \n "
+                f" \n  shape: {self.ref_image.data.shape} \n "
             )
         return super().__repr__() + "no reference image is loaded \n "
 
@@ -487,15 +487,15 @@ class ImageSetHolo(ImageSet):
         return cls(image)
 
     def __save_ref_image(self, file, id_number):
-        if self.images["ref_image"]:
+        if self.ref_image:
             self._ImageSet__save_image(
                 file=file,
                 key="ref_image",
-                id_number=id_number,  # disscuss the use of private method
+                id_number=id_number, 
             )
-        elif not self.images["ref_image"] and id_number == 0:
+        elif not self.ref_image and id_number == 0:
             print("No reference image is saved or already saved.")
-        elif not self.images["ref_image"] and id_number > 0:
+        elif not self.ref_image and id_number > 0 and file[f"raw_data/imageset_{id_number-1}"].attrs["type_measurement"] == "holography":
             print("The link to the previous reference image is saved.")
             file[f"raw_data/imageset_{id_number}/raw_images/ref_image"] = NXlink(
                 f"raw_data/imageset_{id_number-1}/raw_images/ref_image"
