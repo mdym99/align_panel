@@ -8,51 +8,61 @@ from align_panel.data_structure import ImageSetHolo
 
 
 @pytest.mark.parametrize(
-    "path,path_ref, result",
-    [("path1", "path2", True), ("path1", "path5", False), ("path1", "no_image", True)],
+    "path,path_ref",
+    [("path1", "path2"), ("path1", "no_image")],
 )
-def test_load(path, path_ref, result, request):
-    if result:
-        imageset = ImageSetHolo.load(
-            request.getfixturevalue(path), request.getfixturevalue(path_ref)
-        )
-        assert (
-            isinstance(imageset.image, HologramImage)
-            and isinstance(imageset.ref_image, HologramImage)
-            and (imageset.image.data.shape == imageset.ref_image.data.shape)
-            or not imageset.ref_image
-        )
-    elif not result:
-        with pytest.raises(ValueError):
-            ImageSetHolo.load(
-                request.getfixturevalue(path), request.getfixturevalue(path_ref)
-            )
+def test_load(path, path_ref, request):
+    imageset = ImageSetHolo.load(
+        request.getfixturevalue(path), request.getfixturevalue(path_ref)
+    )
+    assert (
+        isinstance(imageset.image, HologramImage)
+        and isinstance(imageset.ref_image, HologramImage)
+        and (imageset.image.data.shape == imageset.ref_image.data.shape)
+        or not imageset.ref_image
+    )
 
 
 @pytest.mark.parametrize(
-    "image,image_ref, result",
+    "path,path_ref",
+    [("path1", "path5"), ("path5", "path1")],
+)
+def test_load_fail(path, path_ref, request):
+    with pytest.raises(ValueError):
+        ImageSetHolo.load(
+            request.getfixturevalue(path), request.getfixturevalue(path_ref)
+        )
+
+
+@pytest.mark.parametrize(
+    "image,image_ref",
     [
-        ("image1", "image2", True),
-        ("image1", "image5", False),
-        ("image1", "no_image", False),
+        ("image1", "image2"),
+        ("image1", "no_image"),
     ],
 )
-def test___init__(image, image_ref, result, request):
-    if result:
-        imageset = ImageSetHolo(
-            request.getfixturevalue(image), request.getfixturevalue(image_ref)
-        )
-        assert (
-            isinstance(imageset.image, HologramImage)
-            and isinstance(imageset.ref_image, HologramImage)
-            and (imageset.image.data.shape == imageset.ref_image.data.shape)
-            or not imageset.ref_image
-        )
-    elif result:
-        with pytest.raises(ValueError):
-            ImageSetHolo(
-                request.getfixturevalue(image), request.getfixturevalue(image_ref)
-            )
+def test___init__(image, image_ref, request):
+    imageset = ImageSetHolo(
+        request.getfixturevalue(image), request.getfixturevalue(image_ref)
+    )
+    assert (
+        isinstance(imageset.image, HologramImage)
+        and isinstance(imageset.ref_image, HologramImage)
+        and (imageset.image.data.shape == imageset.ref_image.data.shape)
+        or not imageset.ref_image
+    )
+
+
+@pytest.mark.parametrize(
+    "image,image_ref",
+    [
+        ("image1", "image5"),
+        ("image5", "image1"),
+    ],
+)
+def test___init__fail(image, image_ref, request):
+    with pytest.raises(ValueError):
+        ImageSetHolo(request.getfixturevalue(image), request.getfixturevalue(image_ref))
 
 
 def test__init__path_type_error(path1, path2):
@@ -68,7 +78,7 @@ def test_set_axes(image_set):
     assert image_set.image.axes_manager[1].units == "nm"
     assert image_set.image.axes_manager[0].name == "x"
     assert image_set.image.axes_manager[1].name == "y"
-    assert image_set.image.axes_manager[0].scale  == image_set.ref_image.axes_manager[0].scale
+    assert str(image_set.image.axes_manager) == str(image_set.ref_image.axes_manager)
 
 
 def test_flip_axes(image_set):

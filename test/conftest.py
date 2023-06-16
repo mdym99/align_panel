@@ -2,33 +2,34 @@ import hyperspy.io as hs
 from hyperspy._signals.hologram_image import HologramImage
 from align_panel.data_structure import ImageSetHolo
 import pytest
+import os
 
 # fixtures
 
 
 @pytest.fixture(scope="session")
 def path1():
-    return "data/Hb-.dm3"
+    return os.path.dirname(os.getcwd()) + "\mag_img_align\data\Hb-.dm3"
 
 
 @pytest.fixture(scope="session")
 def path2():
-    return "data/Rb-.dm3"
+    return os.path.dirname(os.getcwd()) + "\mag_img_align\data\Rb-.dm3"
 
 
 @pytest.fixture(scope="session")
 def path3():
-    return "data/Hb+.dm3"
+    return os.path.dirname(os.getcwd()) + "\mag_img_align\data\Hb+.dm3"
 
 
 @pytest.fixture(scope="session")
 def path4():
-    return "data/Rb+.dm3"
+    return os.path.dirname(os.getcwd()) + "\mag_img_align\data\Rb+.dm3"
 
 
 @pytest.fixture(scope="session")
 def path5():
-    return "data/92_pol+1_+23V_2ns.tiff"
+    return os.path.dirname(os.getcwd()) + "mag_img_align\data\92_pol+1_+23V_2ns.tiff"
 
 
 @pytest.fixture(scope="session")

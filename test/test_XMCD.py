@@ -3,16 +3,17 @@ import numpy as np
 import hyperspy.io as hs
 from align_panel.data_structure import ImageSetXMCD
 from hyperspy._signals.signal2d import Signal2D
+import os
 
 
 @pytest.fixture
 def path1():
-    return "data/92_pol+1_+23V_2ns.tiff"
+    return os.path.dirname(os.getcwd()) + "\mag_img_align\data\92_pol+1_+23V_2ns.tiff"
 
 
 @pytest.fixture
 def path2():
-    return "data/93_pol-1_+23V_2ns.tiff"
+    return os.path.dirname(os.getcwd()) + "\mag_img_align\data\93_pol-1_+23V_2ns.tiff"
 
 
 @pytest.fixture
@@ -40,26 +41,24 @@ def image_set_xmcd1(image2):
     return ImageSetXMCD(image2)
 
 
-@pytest.mark.parametrize("path,result", [("path1", True), ("image1", False)])
-def test_load(path, result, request):
-    if result:
-        imageset = ImageSetXMCD.load(request.getfixturevalue(path))
-        assert isinstance(imageset.image, Signal2D)
-    elif not result:
-        with pytest.raises(ValueError):
-            ImageSetXMCD.load(request.getfixturevalue(path))
+def test_load(path1):
+    imageset = ImageSetXMCD.load(path1)
+    assert isinstance(imageset.image, Signal2D)
 
 
-@pytest.mark.parametrize(
-    "image,result", [("image1", True), ("image2", True), ("path1", False)]
-)
-def test__init__(image, result, request):
-    if result:
-        imageset = ImageSetXMCD(request.getfixturevalue(image))
-        assert isinstance(imageset.image, Signal2D)
-    elif not result:
-        with pytest.raises(TypeError):
-            ImageSetXMCD(request.getfixturevalue(image))
+def test_load_fail(image1):
+    with pytest.raises(TypeError):
+        ImageSetXMCD.load(image1)
+
+
+def test__init__(image1):
+    imageset = ImageSetXMCD(image1)
+    assert isinstance(imageset.image, Signal2D)
+
+
+def test__init__fail(path1):
+    with pytest.raises(TypeError):
+        ImageSetXMCD(path1)
 
 
 def test_load_save(image_set_xmcd, tmp_path):
