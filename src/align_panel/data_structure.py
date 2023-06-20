@@ -1,6 +1,6 @@
-"""
-    This module contains classes that define the data structure of the imagesets.
-    Saving and loading procedures are defined, the saved files are based on the NeXus format.
+"""This module contains classes that define the data structure of the imagesets.
+Saving and loading procedures are defined, the saved files are based on the NeXus format.
+
 """
 import json
 from abc import ABC, abstractclassmethod, abstractmethod
@@ -11,15 +11,15 @@ from hyperspy._signals.hologram_image import HologramImage, Signal2D
 
 
 class ImageSet(ABC):
-    """
-    An abstract parent class for the data structure of the imagesets.
-
-    The child classes are ImageSetHolo and ImageSetXMCD.
+    """An abstract parent class for the data structure of the imagesets.
+    The child classes are ``ImageSetHolo`` and ``ImageSetXMCD``.
 
     Attributes
     ----------
     images : dict
         A dictionary containing the images of the imageset. The keys are the names of the images.
+        The keys are:
+            ``image``: Signal2D - the image of a sample
     type_measurement : str
         The type of the measurement. It is used as an attribute of the NXdata group
         in the NeXus file.
@@ -31,29 +31,28 @@ class ImageSet(ABC):
     show_content(path, scope="short")
         Prints the content of the NeXus file. The scope can be "short" or "full".
     __save_image(key, file, id_number)
-        Method to save the image inside the NeXus file. It is used by the save method.
+        Method to save the image inside the NeXus file. It is used by the ``save`` method.
         Key is the name of the image, file is the NeXus file and id_number is the order number
         of the imageset.
     __file_prep(file)
-        Method to prepare the NeXus file for saving of the imageset. It is used by the save method.
-        File is the opened NeXus file, in which imageset is saved.
+        Method to prepare the NeXus file for saving of the imageset. It is used by the ``save``
+        method. File is the opened NeXus file, in which imageset is saved.
     save(path)
-        Saves the imageset in the NeXus file. It utilizes the __save_image and __file_prep methods.
-        Path is the path of the NeXus file, in which imageset is saved.
+        Saves the imageset in the NeXus file. It utilizes the ``__save_image`` and ``__file_prep``
+        methods. Path is the path of the NeXus file, in which imageset is saved.
     __load_image_from_nxs(file, key, id_number)
-        Method to load image from the NeXus file. It is used by the load_from_nxs method.
-        File is the opened NeXus file, key is the name of the image and id_number is the order number
-        of the imageset.
+        Method to load image from the NeXus file. It is used by the ``load_from_nxs`` method.
+        File is the opened NeXus file, key is the name of the image and id_number is the order
+        number of the imageset.
     load_from_nxs(path, id_number=0)
-        Loads the imageset from the NeXus file. It utilizes the __load_image_from_nxs method.
+        Loads the imageset from the NeXus file. It utilizes the ``__load_image_from_nxs`` method.
         Path is the path of the NeXus file and id_number is the order number of the imageset.
     delete_imageset_from_file(path, id_number=0)
         Deletes the imageset from the NeXus file.
         Path is the path of the NeXus file and id_number is the order number of the imageset.
     add_notes(path_notes, path_file, id_number=0)
-        Adds notes to the NeXus file.
-        Path_notes is the path of the file containing the notes, path_file is the path
-        of the NeXus file and id_number is the order number of the imageset.
+        Adds notes to the NeXus file. Path_notes is the path of the file containing the notes,
+        path_file is the path of the NeXus file and id_number is the order number of the imageset.
     images_content()
         Generator that yields the images of the imageset, that are created.
     set_axes(axis1_name: str, axis2_name: str, units, scale=None)
@@ -66,11 +65,11 @@ class ImageSet(ABC):
 
     """
 
-    def __init__(self, image, type_measurement: str = None):
+    def __init__(self, image: Signal2D, type_measurement: str = None):
         """
         Parameters
         ----------
-        image :
+        image : Signal2D
             A hyperspy object containing the image and its metadata.
         type_measurement : str, optional
             Describes the type of measurement, by default None
@@ -81,8 +80,7 @@ class ImageSet(ABC):
 
     @property
     def image(self):
-        """
-        Property that returns the image of the imageset.
+        """Property that returns the image of the imageset.
 
         Returns
         -------
@@ -93,15 +91,15 @@ class ImageSet(ABC):
 
     def __repr__(self):
         return (
-            f"{self.type_measurement} image set \n "
+            f"{self.type_measurement} imageset \n "
             f"image file name: {self.image.metadata['General']['original_filename']}"
             f"\n  shape: {self.image.data.shape} \n "
         )
 
     @abstractclassmethod
     def load(cls, path: str):
-        """
-        Class method that loads the image from the path and returns an instance of ImageSet object.
+        """Class method that loads the image from the path and returns an instance of ImageSet
+        object.
 
         Parameters
         ----------
@@ -111,7 +109,7 @@ class ImageSet(ABC):
         Returns
         -------
         An instance of ImageSet object containing the image and its metadata.
-        The image is loaded with the help of the hyperspy library.
+        The image is loaded with the ``load`` method from the hyperspy library.
 
         Raises
         ------
@@ -130,8 +128,7 @@ class ImageSet(ABC):
 
     @staticmethod
     def show_content(path: str, scope="short"):
-        """
-        Method that prints the content of the NeXus file. The scope can be "short" or "full".
+        """Method that prints the content of the NeXus file. The scope can be "short" or "full".
 
         Parameters
         ----------
@@ -140,7 +137,7 @@ class ImageSet(ABC):
         scope : str, optional
            Defines the punctuality of the printed content, by default "short"
            Options:
-            "short" prints only the names of the image sets and their types
+            "short" prints only the names of the imagesets and their types
             "full" prints the whole content of the NeXus file
 
         """
@@ -159,8 +156,7 @@ class ImageSet(ABC):
     def __save_image(
         self, key: str, file, id_number: int
     ):  # could be changed to be without __
-        """
-        Method that saves image inside the NeXus file. Image is saved into the raw_data group,
+        """Method that saves image inside the NeXus file. Image is saved into the raw_data group,
         metadata and original metadata are saved into the metadata group, axes are saved as
         attributes to image.
         It is used by the ``save`` method.
@@ -211,8 +207,8 @@ class ImageSet(ABC):
         ] = NXfield(json.dumps(image.original_metadata.as_dictionary()))
 
     def __file_prep(self, file):
-        """
-        Method that prepares the NeXus file for saving the imageset. It is used by the ``save`` method.
+        """Method that prepares the NeXus file for saving the imageset. It is used by the ``save``
+        method.
 
         Parameters
         ----------
@@ -238,7 +234,7 @@ class ImageSet(ABC):
                 print(
                     "The shapes of the images are not the same with the previous ones."
                 )
-        print(f"Image set is saved with id_number: {id_number}.")
+        print(f"Imageset is saved with id_number: {id_number}.")
         file[f"raw_data/imageset_{id_number}"] = NXdata()
         file[f"raw_data/imageset_{id_number}"].attrs[
             "type_measurement"
@@ -249,8 +245,7 @@ class ImageSet(ABC):
 
     @abstractmethod
     def save(self, path: str):
-        """
-        Method that saves the imageset in the NeXus file. It utilizes the ``__save_image``
+        """Method that saves the imageset in the NeXus file. It utilizes the ``__save_image``
         and ``__file_prep`` methods.
 
         Parameters
@@ -265,8 +260,8 @@ class ImageSet(ABC):
 
     @staticmethod
     def __load_image_from_nxs(file, key: str, id_number: int):
-        """
-        Method that loads the image from the NeXus file. It is used by the ``load_from_nxs`` method.
+        """Method that loads the image from the NeXus file. It is used by the ``load_from_nxs``
+        method.
 
         Parameters
         ----------
@@ -313,8 +308,7 @@ class ImageSet(ABC):
 
     @abstractclassmethod
     def load_from_nxs(cls, path: str, id_number: int = 0):
-        """
-        Abstract class method that loads the imageset from the NeXus file. It utilizes the
+        """Abstract class method that loads the imageset from the NeXus file. It utilizes the
         ``__load_image_from_nxs`` method.
         Parameters
         ----------
@@ -337,8 +331,7 @@ class ImageSet(ABC):
 
     @staticmethod
     def delete_imageset_from_file(path: str, id_number: int = 0):
-        """
-        Method that deletes the imageset from the NeXus file.
+        """Method that deletes the imageset from the NeXus file.
 
         Parameters
         ----------
@@ -354,8 +347,7 @@ class ImageSet(ABC):
 
     @staticmethod
     def add_notes(path_notes: str, path_file: str, id_number: int = 0):
-        """
-        Method that adds notes to the NeXus file.
+        """Method that adds notes to the NeXus file.
 
         Parameters
         ----------
@@ -376,8 +368,7 @@ class ImageSet(ABC):
                 ] = NXfield(notes.read())
 
     def images_content(self):
-        """
-        Generator that yields the images of the imageset.
+        """Generator that yields the images of the imageset.
 
         Yields
         ------
@@ -390,8 +381,7 @@ class ImageSet(ABC):
                 yield image
 
     def set_axes(self, axis1_name: str, axis2_name: str, units: str, scale: int = None):
-        """
-        Method that sets the axes of the images of the imageset.
+        """Method that sets the axes of the images of the imageset.
 
         Parameters
         ----------
@@ -415,8 +405,7 @@ class ImageSet(ABC):
                 image.axes_manager[1].scale = scale
 
     def flip_axes(self, axis="y"):
-        """
-        Method that flips the axes of the images of the imageset.
+        """Method that flips the axes of the images of the imageset.
 
         Parameters
         ----------
@@ -435,20 +424,19 @@ class ImageSet(ABC):
 
 
 class ImageSetHolo(ImageSet):
-    """
-    A child class of the ImageSet class. It is used for the holography image sets.
-    This class contains the methods for saving, loading and processing of the holography imagesets.
-    Phase calculation is implemented.
+    """A child class of the ImageSet class. It is used for the holography imagesets. \n
+    This class contains the methods for saving, loading and processing of the holography \n
+    imagesets. Phase calculation is implemented with the help of hyperspy library.
 
     Parameters
     ----------
     images : dict
-        Dictionary containing the images of the imageset. The keys are the names of the images.
+        Dictionary containing the images of the imageset. The keys are the names of the images. \n
         The keys are:
-            image: HologramImage - the hologram image of a sample
-            ref_image: HologramImage - the reference image
-            wave_image: ComplexSignal2D - the reconstructed wave image
-            unwrapped_phase: Signal2D - the unwrapped phase image
+            ``image``: HologramImage - the hologram image of a sample \n
+            ``ref_image``: HologramImage - the reference image \n
+            ``wave_image``: ComplexSignal2D - the reconstructed wave image \n
+            ``unwrapped_phase``: Signal2D - the unwrapped phase image \n
     type_measurement : str
         The type of the measurement. It is used as an attribute of the NXdata group.
         by default "holography"
@@ -459,6 +447,21 @@ class ImageSetHolo(ImageSet):
         Loads the image and reference image from the paths and returns an instance of
         ImageSetHolo object.
     __save_ref_image(file, id_number)
+        Method to save the reference image inside the NeXus file. It is used by the ``save``
+        method.
+    save(path)
+        Saves the imageset in the NeXus file. It utilizes the ``__save_image`` and ``__file_prep``.
+    __load_image_from_nxs(file, key, id_number)
+        Method that loads the image from the NeXus file. It is used by the ``load_from_nxs`` method.
+    load_from_nxs(path, id_number=0)
+        Loads the imageset from the NeXus file. It utilizes the ``__load_image_from_nxs`` method.
+    phase_calculation(sb_option="upper", sb_size_scale=1, use_existing_params=False,
+                        visualize=False, save_jpeg=False, path=None)
+        Method that reconstructs the phase of image. It utilizes the \n
+        ``estimate_sideband_position`` and ``estimate_sideband_size`` methods of hyperspy \n
+        library to estimate the sideband position \n
+        and size. The sideband position and size are saved in the metadata of the image. For the \n
+        phase reconstruction, the ``reconstruct_phase`` method of hyperspy library is used.
 
     """
 
@@ -469,8 +472,7 @@ class ImageSetHolo(ImageSet):
         type_measurement: str = "holography",
     ):
         """
-
-        Parameters
+         Parameters
         ----------
         image : HologramImage
             Hologram image of a sample.
@@ -508,14 +510,35 @@ class ImageSetHolo(ImageSet):
 
     @property
     def ref_image(self):
+        """Reference image propery
+
+        Returns
+        -------
+        ref_image: HologramImage
+
+        """
         return self.images.get("ref_image", None)
 
     @property
     def wave_image(self):
+        """Wave image property
+
+        Returns
+        -------
+        wave_image: ComplexSignal2D
+
+        """
         return self.images.get("wave_image", None)
 
     @property
     def unwrapped_phase(self):
+        """Unwrapped phase image property
+
+        Returns
+        -------
+        unwrapped_phase: Signal2D
+
+        """
         return self.images.get("unwrapped_phase", None)
 
     def __repr__(self):
@@ -529,8 +552,7 @@ class ImageSetHolo(ImageSet):
 
     @classmethod
     def load(cls, path: str, path_ref: str = None):
-        """
-        Method that loads the image and reference image from the paths
+        """Method that loads the image and reference image from the paths
         and returns an instance of ImageSetHolo object.
 
         Parameters
@@ -563,8 +585,8 @@ class ImageSetHolo(ImageSet):
         return cls(image)
 
     def __save_ref_image(self, file, id_number: int):
-        """
-        Method that saves the reference image inside the NeXus file. It is used by the ``save`` method.
+        """Method that saves the reference image inside the NeXus file. It is used by the ``save``
+        method.
 
         Parameters
         ----------
@@ -603,8 +625,7 @@ class ImageSetHolo(ImageSet):
             )
 
     def save(self, path: str):
-        """
-        Method that saves the imageset in the NeXus file. It utilizes the ``__save_image``
+        """Method that saves the imageset in the NeXus file. It utilizes the ``__save_image``
         and ``__file_prep`` methods.
 
         Parameters
@@ -623,9 +644,9 @@ class ImageSetHolo(ImageSet):
     @staticmethod
     def __load_image_from_nxs(
         file, key: str, id_number: int
-    ):  # discuss, is there the need to redefine it just because of HologramImage instead of Signal2D?
-        """
-        Method that loads the image from the NeXus file. It is used by the ``load_from_nxs`` method.
+    ):  # is there the need to redefine it just because of HologramImage instead of Signal2D?
+        """Method that loads the image from the NeXus file. It is used by the ``load_from_nxs``
+        method.
 
         Parameters
         ----------
@@ -672,8 +693,7 @@ class ImageSetHolo(ImageSet):
 
     @classmethod
     def load_from_nxs(cls, path: str, id_number: int = 0):
-        """
-        Class method that loads the imageset from the NeXus file. It utilizes
+        """Class method that loads the imageset from the NeXus file. It utilizes
         the ``__load_image_from_nxs`` method.
 
         Parameters
@@ -711,8 +731,7 @@ class ImageSetHolo(ImageSet):
         save_jpeg=False,
         path: str = None,
     ):
-        """
-        Method that reconstructs the phase of image.
+        """Method that reconstructs the phase of image.
         It utilizes the ``estimate_sideband_position`` and ``estimate_sideband_size`` methods of
         hyperspy library to estimate the sideband position and size. The sideband position and size
         are saved in the metadata of the image. For the phase reconstruction, the
@@ -824,7 +843,36 @@ class ImageSetHolo(ImageSet):
 
 
 class ImageSetXMCD(ImageSet):
+    """A child class of the ImageSet class. It is used for the XMCD imagesets. \n
+    This class contains the methods for saving, loading and processing of the XMCD \n
+    imagesets.
+
+    Parameters
+    ----------
+    images : dict
+        Dictionary containing the images of the imageset. The keys are the names of the images. \n
+        The keys are:
+            ``image``: Signal2D - the XMCD image of a sample \n
+    type_measurement : str
+        The type of the measurement. It is used as an attribute of the NXdata group.
+        by default "xmcd"
+
+    """
+
     def __init__(self, image: Signal2D):
+        """
+        Parameters
+        ----------
+        image : Signal2D
+            XMCD image of a sample.
+        type_measurement : str, optional
+
+        Raises
+        ------
+        TypeError
+            If the image is not of the type Signal2D, raise a TypeError.
+
+        """
         if not isinstance(image, Signal2D):
             raise TypeError(
                 "The image must be of the type Signal2D. Use the .load() method."
@@ -832,12 +880,53 @@ class ImageSetXMCD(ImageSet):
         super().__init__(image, type_measurement="xmcd")
 
     @classmethod
-    def load(cls, path):
+    def load(cls, path: str):
+        """Class method that loads the image from the path and returns an instance of ImageSetXMCD
+        object.
+
+        Parameters
+        ----------
+        path : str
+            Path of the image file. The image is loaded with the ``load`` from the hyperspy
+            library.
+
+        Returns
+        -------
+        ImageSetXMCD
+            An instance of ImageSetXMCD object containing the image and its metadata.
+
+        """
         return super().load(path)
 
-    def save(self, path):
+    def save(self, path: str):
+        """Method that saves the imageset in the NeXus file. It utilizes the ``save`` method of the
+        ImageSet class.
+
+        Parameters
+        ----------
+        path : str
+            Path of the NeXus file, in which the imageset is saved.
+
+        """
         super().save(path)
 
     @classmethod
-    def load_from_nxs(cls, path, id_number=0):
+    def load_from_nxs(cls, path: str, id_number=0):
+        """Class method that loads the imageset from the NeXus file. It utilizes
+        the ``load_image_from_nxs`` method of the ImageSet class.
+
+        Parameters
+        ----------
+        path : str
+            Path of the NeXus file, from which the imageset is loaded.
+        id_number : int, optional
+            Number of the imageset. Defines the order of the imagesets in the NeXus file,
+            by default 0
+
+        Returns
+        -------
+        ImageSetXMCD
+            An instance of ImageSetXMCD object containing the image and its metadata.
+
+        """
         return super().load_from_nxs(path, id_number)
