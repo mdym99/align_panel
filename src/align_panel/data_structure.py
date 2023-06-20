@@ -20,58 +20,46 @@ class ImageSet(ABC):
     ----------
     images : dict
         A dictionary containing the images of the imageset. The keys are the names of the images.
-
     type_measurement : str
-        The type of the measurement. It is used as an attribute of the NXdata group 
+        The type of the measurement. It is used as an attribute of the NXdata group
         in the NeXus file.
 
     Methods
     -------
     load(path)
         Loads the image from the path and returns an instance of ImageSet object.
-
     show_content(path, scope="short")
         Prints the content of the NeXus file. The scope can be "short" or "full".
-
     __save_image(key, file, id_number)
         Method to save the image inside the NeXus file. It is used by the save method.
-        Key is the name of the image, file is the NeXus file and id_number is the order number 
+        Key is the name of the image, file is the NeXus file and id_number is the order number
         of the imageset.
-
     __file_prep(file)
         Method to prepare the NeXus file for saving of the imageset. It is used by the save method.
         File is the opened NeXus file, in which imageset is saved.
-
     save(path)
         Saves the imageset in the NeXus file. It utilizes the __save_image and __file_prep methods.
         Path is the path of the NeXus file, in which imageset is saved.
-
     __load_image_from_nxs(file, key, id_number)
         Method to load image from the NeXus file. It is used by the load_from_nxs method.
-        File is the opened NeXus file, key is the name of the image and id_number is the order number 
+        File is the opened NeXus file, key is the name of the image and id_number is the order number
         of the imageset.
-
     load_from_nxs(path, id_number=0)
         Loads the imageset from the NeXus file. It utilizes the __load_image_from_nxs method.
         Path is the path of the NeXus file and id_number is the order number of the imageset.
-
     delete_imageset_from_file(path, id_number=0)
         Deletes the imageset from the NeXus file.
         Path is the path of the NeXus file and id_number is the order number of the imageset.
-
     add_notes(path_notes, path_file, id_number=0)
         Adds notes to the NeXus file.
-        Path_notes is the path of the file containing the notes, path_file is the path 
+        Path_notes is the path of the file containing the notes, path_file is the path
         of the NeXus file and id_number is the order number of the imageset.
-
     images_content()
         Generator that yields the images of the imageset, that are created.
-
     set_axes(axis1_name: str, axis2_name: str, units, scale=None)
         Sets the axes of all the images of the imageset.
         Axis1_name is the name of the first axis, axis2_name is the name of the second axis,
         units is the units of the axes and scale is the scale of the axes.
-
     flip_axes(axis="y")
         Flips the axes of all the images of the imageset.
         Axis is the axis to be flipped. It can be "x", "y" or "both".
@@ -84,9 +72,9 @@ class ImageSet(ABC):
         ----------
         image :
             A hyperspy object containing the image and its metadata.
-
         type_measurement : str, optional
             Describes the type of measurement, by default None
+
         """
         self.images = {"image": image}  # named tuple could be better?
         self.type_measurement = type_measurement
@@ -129,6 +117,7 @@ class ImageSet(ABC):
         ------
         TypeError
             If the path is not a string, raise a TypeError.
+
         """
         if not isinstance(path, str):
             raise TypeError("The path must be a string.")
@@ -150,11 +139,10 @@ class ImageSet(ABC):
             Path of the NeXus file.
         scope : str, optional
            Defines the punctuality of the printed content, by default "short"
-
            Options:
             "short" prints only the names of the image sets and their types
-
             "full" prints the whole content of the NeXus file
+
         """
         with nxopen(path, "r") as opened_file:
             if scope == "full":
@@ -185,6 +173,7 @@ class ImageSet(ABC):
             Opened NeXus file, in which the image is saved.
         id_number : int
             Number of the imageset. Defines the order of the imagesets in the NeXus file.
+
         """
         image = self.images[key]
         file[f"raw_data/imageset_{id_number}/raw_images/{key}"] = NXfield(
@@ -217,9 +206,9 @@ class ImageSet(ABC):
             json.dumps(image.metadata.as_dictionary())
         )
 
-        file[f"raw_data/imageset_{id_number}/metadata/{key}_original_metadata"] = NXfield(
-            json.dumps(image.original_metadata.as_dictionary())
-        )
+        file[
+            f"raw_data/imageset_{id_number}/metadata/{key}_original_metadata"
+        ] = NXfield(json.dumps(image.original_metadata.as_dictionary()))
 
     def __file_prep(self, file):
         """
@@ -229,10 +218,12 @@ class ImageSet(ABC):
         ----------
         file : NXlinkgroup | NXgroup
             Opened NeXus file, in which the image is saved.
+            The file is opened with function ``nxopen`` from nexusformat library.
         Returns
         -------
         id_number : int
             Number of the imageset. Defines the order of the imagesets in the NeXus file.
+
         """
         if "raw_data" not in file:
             id_number = 0
@@ -244,7 +235,9 @@ class ImageSet(ABC):
                 file[f"raw_data/imageset_{id_number-1}/raw_images/image"].shape
                 != self.image.data.shape
             ):
-                print("The shapes of the images are not the same with the previous ones.")
+                print(
+                    "The shapes of the images are not the same with the previous ones."
+                )
         print(f"Image set is saved with id_number: {id_number}.")
         file[f"raw_data/imageset_{id_number}"] = NXdata()
         file[f"raw_data/imageset_{id_number}"].attrs[
@@ -264,6 +257,7 @@ class ImageSet(ABC):
         ----------
         path : str
             Path of the NeXus file, in which the imageset is saved.
+
         """
         with nxopen(path, "a") as opened_file:
             id_number = self.__file_prep(opened_file)
@@ -278,11 +272,9 @@ class ImageSet(ABC):
         ----------
         file : NXlinkgroup | NXgroup
             Opened NeXus file, in which the image is saved.
-            The file is opened with function nxopen from nexusformat library.
-
+            The file is opened with function ``nxopen`` from nexusformat library.
         key : str
             Key of the image in the images dictionary.
-
         id_number : int
             Number of the imageset. Defines the order of the imagesets in the NeXus file.
 
@@ -290,13 +282,16 @@ class ImageSet(ABC):
         -------
         full_image: Signal2D
             A hyperspy object containing the image and its metadata.
+
         """
         image = file[f"raw_data/imageset_{id_number}/raw_images/{key}"]
         metadata = json.loads(
             file[f"raw_data/imageset_{id_number}/metadata/{key}_metadata"].nxdata
         )
         original_metadata = json.loads(
-            file[f"raw_data/imageset_{id_number}/metadata/{key}_original_metadata"].nxdata
+            file[
+                f"raw_data/imageset_{id_number}/metadata/{key}_original_metadata"
+            ].nxdata
         )
         full_image = Signal2D(
             image.data,
@@ -326,12 +321,13 @@ class ImageSet(ABC):
         path : str
             Path of the NeXus file, from which the imageset is loaded.
         id_number : int, optional
-        Number of the imageset. Defines the order of the imagesets in the NeXus file,
-        by default 0
+            Number of the imageset. Defines the order of the imagesets in the NeXus file,
+            by default 0
 
         Returns
         -------
         Instance of the ImageSet class.
+
         """
         with nxopen(path, "r") as opened_file:
             image = cls.__load_image_from_nxs(
@@ -349,8 +345,9 @@ class ImageSet(ABC):
         path : str
             Path of the NeXus file, from which the imageset is deleted.
         id_number : int, optional
-            Number of the imageset. Defines the order of the imagesets in the NeXus file, 
+            Number of the imageset. Defines the order of the imagesets in the NeXus file,
             by default 0
+
         """
         with nxopen(path, "a") as opened_file:
             del opened_file[f"raw_data/imageset_{id_number}"]
@@ -367,8 +364,9 @@ class ImageSet(ABC):
         path_file : str
             Path of the NeXus file, to which the notes are added.
         id_number : int, optional
-            Number of the imageset. Defines the order of the imagesets in the NeXus file, 
+            Number of the imageset. Defines the order of the imagesets in the NeXus file,
             by default 0
+
         """
         with nxopen(path_file, "a") as opened_file:
             with open(path_notes, "r", encoding="UTF-8") as notes:
@@ -385,6 +383,7 @@ class ImageSet(ABC):
         ------
         image : Signal2D
             A hyperspy objects saved in the images dictionary.
+
         """
         for image in self.images.values():
             if image is not None:
@@ -404,6 +403,7 @@ class ImageSet(ABC):
             Units of the axes.
         scale : int, optional
             Scale of the axes, by default None
+
         """
         for image in self.images_content():
             image.axes_manager[0].name = axis1_name
@@ -422,6 +422,7 @@ class ImageSet(ABC):
         ----------
         axis : str, optional
             Defines the axis, in which the image is flipped, by default "y"
+
         """
         for image in self.images_content():
             if axis == "y":
@@ -445,20 +446,29 @@ class ImageSetHolo(ImageSet):
         Dictionary containing the images of the imageset. The keys are the names of the images.
         The keys are:
             image: HologramImage - the hologram image of a sample
-            ref_image: HologramImage - the reference image 
+            ref_image: HologramImage - the reference image
             wave_image: ComplexSignal2D - the reconstructed wave image
             unwrapped_phase: Signal2D - the unwrapped phase image
-    
-    type_measurement : str 
+    type_measurement : str
         The type of the measurement. It is used as an attribute of the NXdata group.
         by default "holography"
 
     Methods
     -------
+    load(path, path_ref=None)
+        Loads the image and reference image from the paths and returns an instance of
+        ImageSetHolo object.
+    __save_ref_image(file, id_number)
 
     """
-    def __init__(self, image: HologramImage, ref_image: HologramImage = None, type_measurement: str = "holography"):
-        """_summary_
+
+    def __init__(
+        self,
+        image: HologramImage,
+        ref_image: HologramImage = None,
+        type_measurement: str = "holography",
+    ):
+        """
 
         Parameters
         ----------
@@ -475,6 +485,7 @@ class ImageSetHolo(ImageSet):
             If the image or the reference image is not of the type HologramImage, raise a TypeError.
         ValueError
             If the image and the reference image do not have the same shape, raise a ValueError.
+
         """
         if not isinstance(image, HologramImage):
             raise TypeError(
@@ -490,10 +501,10 @@ class ImageSetHolo(ImageSet):
                     "The image and the reference image must have the same shape."
                 )
 
-        super().__init__(image, type_measurement = type_measurement)
+        super().__init__(image, type_measurement=type_measurement)
         self.images["ref_image"] = ref_image
-        self.images["wave_image"] = None  
-        self.images["unwrapped_phase"] = None 
+        self.images["wave_image"] = None
+        self.images["unwrapped_phase"] = None
 
     @property
     def ref_image(self):
@@ -517,7 +528,7 @@ class ImageSetHolo(ImageSet):
         return super().__repr__() + "no reference image is loaded \n "
 
     @classmethod
-    def load(cls, path: str, path_ref:str = None):
+    def load(cls, path: str, path_ref: str = None):
         """
         Method that loads the image and reference image from the paths
         and returns an instance of ImageSetHolo object.
@@ -532,13 +543,14 @@ class ImageSetHolo(ImageSet):
         Returns
         -------
         ImageSetHolo
-            An instance of ImageSetHolo object containing the image and its metadata, 
+            An instance of ImageSetHolo object containing the image and its metadata,
             also the reference image and its metadata if it is loaded.
 
         Raises
         ------
         TypeError
             If the path or the path_ref is not a string, raise a TypeError.
+
         """
         if not isinstance(path, str):
             raise TypeError("The path must be a string.")
@@ -558,20 +570,25 @@ class ImageSetHolo(ImageSet):
         ----------
         file : NXlinkgroup | NXgroup
             Opened NeXus file, in which the image is saved.
-            The file is opened with function nxopen from nexusformat library.
+            The file is opened with function ``nxopen`` from nexusformat library.
         id_number : int
             Number of the imageset. Defines the order of the imagesets in the NeXus file.
+
         """
         if self.ref_image:
             self._ImageSet__save_image(
                 file=file,
                 key="ref_image",
-                id_number=id_number, 
+                id_number=id_number,
             )
         elif not self.ref_image and id_number == 0:
             print("No reference image is saved or already saved.")
-        elif not self.ref_image and id_number > 0 and \
-                file[f"raw_data/imageset_{id_number-1}"].attrs["type_measurement"] == "holography":
+        elif (
+            not self.ref_image
+            and id_number > 0
+            and file[f"raw_data/imageset_{id_number-1}"].attrs["type_measurement"]
+            == "holography"
+        ):
             print("The link to the previous reference image is saved.")
             file[f"raw_data/imageset_{id_number}/raw_images/ref_image"] = NXlink(
                 f"raw_data/imageset_{id_number-1}/raw_images/ref_image"
@@ -585,19 +602,22 @@ class ImageSetHolo(ImageSet):
                 f"raw_data/imageset_{id_number-1}/metadata/ref_image_original_metadata"
             )
 
-    def save(self, path:str):
+    def save(self, path: str):
         """
-        Method that saves the imageset in the NeXus file. It utilizes the ``__save_image`` 
+        Method that saves the imageset in the NeXus file. It utilizes the ``__save_image``
         and ``__file_prep`` methods.
 
         Parameters
         ----------
         path : str
             Path of the NeXus file, in which the imageset is saved.
+
         """
         with nxopen(path, "a") as opened_file:
             id_number = self._ImageSet__file_prep(opened_file)
-            self._ImageSet__save_image(file=opened_file, key="image", id_number=id_number)
+            self._ImageSet__save_image(
+                file=opened_file, key="image", id_number=id_number
+            )
             self.__save_ref_image(file=opened_file, id_number=id_number)
 
     @staticmethod
@@ -611,7 +631,7 @@ class ImageSetHolo(ImageSet):
         ----------
         file : NXlinkgroup | NXgroup
             Opened NeXus file, in which the image is saved.
-            The file is opened with function nxopen from nexusformat library.
+            The file is opened with function ``nxopen`` from nexusformat library.
         key : str
             Key of the image in the images dictionary.
         id_number : int
@@ -621,13 +641,16 @@ class ImageSetHolo(ImageSet):
         -------
         full_image : HologramImage
             A hyperspy object containing the image and its metadata.
+
         """
         image = file[f"raw_data/imageset_{id_number}/raw_images/{key}"]
         metadata = json.loads(
             file[f"raw_data/imageset_{id_number}/metadata/{key}_metadata"].nxdata
         )
         original_metadata = json.loads(
-            file[f"raw_data/imageset_{id_number}/metadata/{key}_original_metadata"].nxdata
+            file[
+                f"raw_data/imageset_{id_number}/metadata/{key}_original_metadata"
+            ].nxdata
         )
         full_image = HologramImage(
             image.data,
@@ -650,7 +673,7 @@ class ImageSetHolo(ImageSet):
     @classmethod
     def load_from_nxs(cls, path: str, id_number: int = 0):
         """
-        Class method that loads the imageset from the NeXus file. It utilizes 
+        Class method that loads the imageset from the NeXus file. It utilizes
         the ``__load_image_from_nxs`` method.
 
         Parameters
@@ -658,7 +681,7 @@ class ImageSetHolo(ImageSet):
         path : str
             Path of the NeXus file, from which the imageset is loaded.
         id_number : int, optional
-            Number of the imageset. Defines the order of the imagesets in the NeXus file, 
+            Number of the imageset. Defines the order of the imagesets in the NeXus file,
             by default 0
 
         Returns
@@ -666,6 +689,7 @@ class ImageSetHolo(ImageSet):
         ImageSetHolo
             An instance of ImageSetHolo object containing the image and its metadata,
             also the reference image and its metadata if it is loaded.
+
         """
         with nxopen(path, "r") as opened_file:
             full_image = cls.__load_image_from_nxs(
@@ -678,20 +702,26 @@ class ImageSetHolo(ImageSet):
                 return cls(full_image, full_ref_image)
             return cls(full_image)
 
-    def phase_calculation(self, sb_option: str = "upper",sb_size_scale:int = 1, \
-                          use_existing_params = False, visualize=False, save_jpeg=False, \
-                            path: str =None):
+    def phase_calculation(
+        self,
+        sb_option: str = "upper",
+        sb_size_scale: int = 1,
+        use_existing_params=False,
+        visualize=False,
+        save_jpeg=False,
+        path: str = None,
+    ):
         """
         Method that reconstructs the phase of image.
-        It utilizes the ``estimate_sideband_position`` and ``estimate_sideband_size`` methods of 
-        hyperspy library to estimate the sideband position and size. The sideband position and size 
-        are saved in the metadata of the image. For the phase reconstruction, the 
-        ``reconstruct_phase`` method of hyperspy library is used. With this method, wave image is 
+        It utilizes the ``estimate_sideband_position`` and ``estimate_sideband_size`` methods of
+        hyperspy library to estimate the sideband position and size. The sideband position and size
+        are saved in the metadata of the image. For the phase reconstruction, the
+        ``reconstruct_phase`` method of hyperspy library is used. With this method, wave image is
         reconstructed and saved in the images dictionary, same as the unwrapped phase image.
         Reference image is used for the calculation of the sideband position and size.
         It is possible to load the reconstruction parameters from the metadata of the image,
-        if the image was already processed. 
-        Unwrapped image can be optionally plotted and saved as a jpeg file outside of the 
+        if the image was already processed.
+        Unwrapped image can be optionally plotted and saved as a jpeg file outside of the
         NeXus file.
 
 
@@ -718,50 +748,62 @@ class ImageSetHolo(ImageSet):
         """
         if use_existing_params is False:
             sb_position = self.ref_image.estimate_sideband_position(
-                ap_cb_radius=None, sb= sb_option, show_progressbar = False
+                ap_cb_radius=None, sb=sb_option, show_progressbar=False
             )
-            sb_size = self.ref_image.estimate_sideband_size(sb_position, show_progressbar = False) * sb_size_scale
+            sb_size = (
+                self.ref_image.estimate_sideband_size(
+                    sb_position, show_progressbar=False
+                )
+                * sb_size_scale
+            )
         else:
             if "Holography" in self.image.metadata.Signal.keys():
-                sb_position = self.image.metadata["Signal"]["Holography"]["Reconstruction_parameters"]["sb_position"]
-                sb_size = self.image.metadata["Signal"]["Holography"]["Reconstruction_parameters"]["sb_size"] * sb_size_scale
+                sb_position = self.image.metadata["Signal"]["Holography"][
+                    "Reconstruction_parameters"
+                ]["sb_position"]
+                sb_size = (
+                    self.image.metadata["Signal"]["Holography"][
+                        "Reconstruction_parameters"
+                    ]["sb_size"]
+                    * sb_size_scale
+                )
             else:
                 raise ValueError("The reconstruction parameters are not defined.")
-        self.images["wave_image"] = self.images['image'].reconstruct_phase(
+        self.images["wave_image"] = self.images["image"].reconstruct_phase(
             self.ref_image,
             sb_position=sb_position,
             sb_size=sb_size,
-            parallel = True,
-            show_progressbar = False
+            parallel=True,
+            show_progressbar=False,
         )
-        self.image.metadata["Signal"]["Holography"] = self.wave_image.metadata["Signal"][
-            "Holography"
-        ]
+        self.image.metadata["Signal"]["Holography"] = self.wave_image.metadata[
+            "Signal"
+        ]["Holography"]
         self.image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
             "sb_position"
         ] = tuple(
-            self.wave_image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
-                "sb_position"
-            ].data.astype("int")
+            self.wave_image.metadata["Signal"]["Holography"][
+                "Reconstruction_parameters"
+            ]["sb_position"].data.astype("int")
         )
         self.image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
             "sb_size"
         ] = float(
-            self.wave_image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
-                "sb_size"
-            ].data
+            self.wave_image.metadata["Signal"]["Holography"][
+                "Reconstruction_parameters"
+            ]["sb_size"].data
         )
         self.image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
             "sb_smoothness"
         ] = float(
-            self.wave_image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
-                "sb_smoothness"
-            ].data
+            self.wave_image.metadata["Signal"]["Holography"][
+                "Reconstruction_parameters"
+            ]["sb_smoothness"].data
         )
         if (
-            self.wave_image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
-                "sb_units"
-            ]
+            self.wave_image.metadata["Signal"]["Holography"][
+                "Reconstruction_parameters"
+            ]["sb_units"]
             is not None
         ):
             self.image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
