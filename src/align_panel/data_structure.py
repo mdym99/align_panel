@@ -175,7 +175,7 @@ class ImageSet(ABC):
         Method that saves image inside the NeXus file. Image is saved into the raw_data group,
         metadata and original metadata are saved into the metadata group, axes are saved as
         attributes to image.
-        It is used by the save method.
+        It is used by the ``save`` method.
 
         Parameters
         ----------
@@ -223,7 +223,7 @@ class ImageSet(ABC):
 
     def __file_prep(self, file):
         """
-        Method that prepares the NeXus file for saving the imageset. It is used by the save method.
+        Method that prepares the NeXus file for saving the imageset. It is used by the ``save`` method.
 
         Parameters
         ----------
@@ -257,8 +257,8 @@ class ImageSet(ABC):
     @abstractmethod
     def save(self, path: str):
         """
-        Method that saves the imageset in the NeXus file. It utilizes the __save_image
-        and __file_prep methods.
+        Method that saves the imageset in the NeXus file. It utilizes the ``__save_image``
+        and ``__file_prep`` methods.
 
         Parameters
         ----------
@@ -272,7 +272,7 @@ class ImageSet(ABC):
     @staticmethod
     def __load_image_from_nxs(file, key: str, id_number: int):
         """
-        Method that loads the image from the NeXus file. It is used by the load_from_nxs method.
+        Method that loads the image from the NeXus file. It is used by the ``load_from_nxs`` method.
 
         Parameters
         ----------
@@ -320,7 +320,7 @@ class ImageSet(ABC):
     def load_from_nxs(cls, path: str, id_number: int = 0):
         """
         Abstract class method that loads the imageset from the NeXus file. It utilizes the
-        __load_image_from_nxs method.
+        ``__load_image_from_nxs`` method.
         Parameters
         ----------
         path : str
@@ -552,14 +552,13 @@ class ImageSetHolo(ImageSet):
 
     def __save_ref_image(self, file, id_number: int):
         """
-        Method that saves the reference image inside the NeXus file. It is used by the save method.
+        Method that saves the reference image inside the NeXus file. It is used by the ``save`` method.
 
         Parameters
         ----------
         file : NXlinkgroup | NXgroup
             Opened NeXus file, in which the image is saved.
             The file is opened with function nxopen from nexusformat library.
-
         id_number : int
             Number of the imageset. Defines the order of the imagesets in the NeXus file.
         """
@@ -588,8 +587,8 @@ class ImageSetHolo(ImageSet):
 
     def save(self, path:str):
         """
-        Method that saves the imageset in the NeXus file. It utilizes the __save_image 
-        and __file_prep methods.
+        Method that saves the imageset in the NeXus file. It utilizes the ``__save_image`` 
+        and ``__file_prep`` methods.
 
         Parameters
         ----------
@@ -606,17 +605,15 @@ class ImageSetHolo(ImageSet):
         file, key: str, id_number: int
     ):  # discuss, is there the need to redefine it just because of HologramImage instead of Signal2D?
         """
-        Method that loads the image from the NeXus file. It is used by the load_from_nxs method.
+        Method that loads the image from the NeXus file. It is used by the ``load_from_nxs`` method.
 
         Parameters
         ----------
         file : NXlinkgroup | NXgroup
             Opened NeXus file, in which the image is saved.
             The file is opened with function nxopen from nexusformat library.
-        
         key : str
             Key of the image in the images dictionary.
-        
         id_number : int
             Number of the imageset. Defines the order of the imagesets in the NeXus file.
 
@@ -654,7 +651,7 @@ class ImageSetHolo(ImageSet):
     def load_from_nxs(cls, path: str, id_number: int = 0):
         """
         Class method that loads the imageset from the NeXus file. It utilizes 
-        the __load_image_from_nxs method.
+        the ``__load_image_from_nxs`` method.
 
         Parameters
         ----------
@@ -681,42 +678,85 @@ class ImageSetHolo(ImageSet):
                 return cls(full_image, full_ref_image)
             return cls(full_image)
 
-    def phase_calculation(self, visualize=False, save_jpeg=False, path=None):
-        sb_position = self.ref_image.estimate_sideband_position(
-            ap_cb_radius=None, sb="upper"
-        )
-        sb_size = self.ref_image.estimate_sideband_size(sb_position)
+    def phase_calculation(self, sb_option: str = "upper",sb_size_scale:int = 1, \
+                          use_existing_params = False, visualize=False, save_jpeg=False, \
+                            path: str =None):
+        """
+        Method that reconstructs the phase of image.
+        It utilizes the ``estimate_sideband_position`` and ``estimate_sideband_size`` methods of 
+        hyperspy library to estimate the sideband position and size. The sideband position and size 
+        are saved in the metadata of the image. For the phase reconstruction, the 
+        ``reconstruct_phase`` method of hyperspy library is used. With this method, wave image is 
+        reconstructed and saved in the images dictionary, same as the unwrapped phase image.
+        Reference image is used for the calculation of the sideband position and size.
+        It is possible to load the reconstruction parameters from the metadata of the image,
+        if the image was already processed. 
+        Unwrapped image can be optionally plotted and saved as a jpeg file outside of the 
+        NeXus file.
 
-        self.images["wave_image"] = self.image.reconstruct_phase(
+
+        Parameters
+        ----------
+        sb_option : str, optional
+            Defines the sideband position, by default "upper"
+            Options:
+                "upper" - upper sideband
+                "lower" - lower sideband
+        sb_size_scale : int, optional
+            Size of the sideband is multiplied by this number, by default 1
+        use_existing_params : bool, optional
+            If True, the reconstruction parameters are loaded from the metadata of the image,
+            if saved, by default False
+        visualize : bool, optional
+            If True, the unwrapped phase image is plotted, by default False
+        save_jpeg : bool, optional
+            If True, the unwrapped phase image is saved as a jpeg file outside of the NeXus file,
+            by default False
+        path : str, optional
+            Path of the file, in which the unwrapped phase image is saved, by default None
+
+        """
+        if use_existing_params is False:
+            sb_position = self.ref_image.estimate_sideband_position(
+                ap_cb_radius=None, sb= sb_option, show_progressbar = False
+            )
+            sb_size = self.ref_image.estimate_sideband_size(sb_position, show_progressbar = False) * sb_size_scale
+        else:
+            if "Holography" in self.image.metadata.Signal.keys():
+                sb_position = self.image.metadata["Signal"]["Holography"]["Reconstruction_parameters"]["sb_position"]
+                sb_size = self.image.metadata["Signal"]["Holography"]["Reconstruction_parameters"]["sb_size"] * sb_size_scale
+            else:
+                raise ValueError("The reconstruction parameters are not defined.")
+        self.images["wave_image"] = self.images['image'].reconstruct_phase(
             self.ref_image,
             sb_position=sb_position,
             sb_size=sb_size,
-            output_shape=np.shape(self.image.data),
+            parallel = True,
+            show_progressbar = False
         )
-        self.images["unwrapped_phase"] = self.wave_image.unwrapped_phase()
         self.image.metadata["Signal"]["Holography"] = self.wave_image.metadata["Signal"][
             "Holography"
         ]
         self.image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
             "sb_position"
-        ] = list(
+        ] = tuple(
             self.wave_image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
                 "sb_position"
-            ].data.astype("float")
+            ].data.astype("int")
         )
         self.image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
             "sb_size"
-        ] = list(
+        ] = float(
             self.wave_image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
                 "sb_size"
-            ].data.astype("float")
+            ].data
         )
         self.image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
             "sb_smoothness"
-        ] = list(
+        ] = float(
             self.wave_image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
                 "sb_smoothness"
-            ].data.astype("float")
+            ].data
         )
         if (
             self.wave_image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
@@ -726,11 +766,13 @@ class ImageSetHolo(ImageSet):
         ):
             self.image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
                 "sb_units"
-            ] = list(
+            ] = str(
                 self.wave_image.metadata["Signal"]["Holography"][
                     "Reconstruction_parameters"
-                ]["sb_units"].data.astype("float")
+                ]["sb_units"].data
             )
+
+        self.images["unwrapped_phase"] = self.wave_image.unwrapped_phase()
 
         if visualize:
             self.images["unwrapped_phase"].plot()
