@@ -278,6 +278,7 @@ class ImageSet(ABC):
         ----------
         file : NXlinkgroup | NXgroup
             Opened NeXus file, in which the image is saved.
+            The file is opened with function nxopen from nexusformat library.
 
         key : str
             Key of the image in the images dictionary.
@@ -287,7 +288,7 @@ class ImageSet(ABC):
 
         Returns
         -------
-        image: Signal2D
+        full_image: Signal2D
             A hyperspy object containing the image and its metadata.
         """
         image = file[f"raw_data/imageset_{id_number}/raw_images/{key}"]
@@ -433,7 +434,48 @@ class ImageSet(ABC):
 
 
 class ImageSetHolo(ImageSet):
-    def __init__(self, image: HologramImage, ref_image: HologramImage = None):
+    """
+    A child class of the ImageSet class. It is used for the holography image sets.
+    This class contains the methods for saving, loading and processing of the holography imagesets.
+    Phase calculation is implemented.
+
+    Parameters
+    ----------
+    images : dict
+        Dictionary containing the images of the imageset. The keys are the names of the images.
+        The keys are:
+            image: HologramImage - the hologram image of a sample
+            ref_image: HologramImage - the reference image 
+            wave_image: ComplexSignal2D - the reconstructed wave image
+            unwrapped_phase: Signal2D - the unwrapped phase image
+    
+    type_measurement : str 
+        The type of the measurement. It is used as an attribute of the NXdata group.
+        by default "holography"
+
+    Methods
+    -------
+
+    """
+    def __init__(self, image: HologramImage, ref_image: HologramImage = None, type_measurement: str = "holography"):
+        """_summary_
+
+        Parameters
+        ----------
+        image : HologramImage
+            Hologram image of a sample.
+        ref_image : HologramImage, optional
+            Reference image, by default None
+        type_measurement : str, optional
+            Describes the type of measurement, by default "holography"
+
+        Raises
+        ------
+        TypeError
+            If the image or the reference image is not of the type HologramImage, raise a TypeError.
+        ValueError
+            If the image and the reference image do not have the same shape, raise a ValueError.
+        """
         if not isinstance(image, HologramImage):
             raise TypeError(
                 "The image must be of the type HologramImage. Use the .load() method."
@@ -448,7 +490,7 @@ class ImageSetHolo(ImageSet):
                     "The image and the reference image must have the same shape."
                 )
 
-        super().__init__(image, type_measurement="holography")
+        super().__init__(image, type_measurement = type_measurement)
         self.images["ref_image"] = ref_image
         self.images["wave_image"] = None  
         self.images["unwrapped_phase"] = None 
@@ -475,7 +517,29 @@ class ImageSetHolo(ImageSet):
         return super().__repr__() + "no reference image is loaded \n "
 
     @classmethod
-    def load(cls, path, path_ref=None):
+    def load(cls, path: str, path_ref:str = None):
+        """
+        Method that loads the image and reference image from the paths
+        and returns an instance of ImageSetHolo object.
+
+        Parameters
+        ----------
+        path : str
+            Path of the image file.
+        path_ref : str, optional
+            Path of the reference image, by default None
+
+        Returns
+        -------
+        ImageSetHolo
+            An instance of ImageSetHolo object containing the image and its metadata, 
+            also the reference image and its metadata if it is loaded.
+
+        Raises
+        ------
+        TypeError
+            If the path or the path_ref is not a string, raise a TypeError.
+        """
         if not isinstance(path, str):
             raise TypeError("The path must be a string.")
         image = hs.load(path, signal_type="hologram")
@@ -486,7 +550,19 @@ class ImageSetHolo(ImageSet):
             return cls(image, ref_image)
         return cls(image)
 
-    def __save_ref_image(self, file, id_number):
+    def __save_ref_image(self, file, id_number: int):
+        """
+        Method that saves the reference image inside the NeXus file. It is used by the save method.
+
+        Parameters
+        ----------
+        file : NXlinkgroup | NXgroup
+            Opened NeXus file, in which the image is saved.
+            The file is opened with function nxopen from nexusformat library.
+
+        id_number : int
+            Number of the imageset. Defines the order of the imagesets in the NeXus file.
+        """
         if self.ref_image:
             self._ImageSet__save_image(
                 file=file,
@@ -495,7 +571,8 @@ class ImageSetHolo(ImageSet):
             )
         elif not self.ref_image and id_number == 0:
             print("No reference image is saved or already saved.")
-        elif not self.ref_image and id_number > 0 and file[f"raw_data/imageset_{id_number-1}"].attrs["type_measurement"] == "holography":
+        elif not self.ref_image and id_number > 0 and \
+                file[f"raw_data/imageset_{id_number-1}"].attrs["type_measurement"] == "holography":
             print("The link to the previous reference image is saved.")
             file[f"raw_data/imageset_{id_number}/raw_images/ref_image"] = NXlink(
                 f"raw_data/imageset_{id_number-1}/raw_images/ref_image"
@@ -509,7 +586,16 @@ class ImageSetHolo(ImageSet):
                 f"raw_data/imageset_{id_number-1}/metadata/ref_image_original_metadata"
             )
 
-    def save(self, path):  # changed, working, review
+    def save(self, path:str):
+        """
+        Method that saves the imageset in the NeXus file. It utilizes the __save_image 
+        and __file_prep methods.
+
+        Parameters
+        ----------
+        path : str
+            Path of the NeXus file, in which the imageset is saved.
+        """
         with nxopen(path, "a") as opened_file:
             id_number = self._ImageSet__file_prep(opened_file)
             self._ImageSet__save_image(file=opened_file, key="image", id_number=id_number)
@@ -517,8 +603,28 @@ class ImageSetHolo(ImageSet):
 
     @staticmethod
     def __load_image_from_nxs(
-        file, key, id_number
+        file, key: str, id_number: int
     ):  # discuss, is there the need to redefine it just because of HologramImage instead of Signal2D?
+        """
+        Method that loads the image from the NeXus file. It is used by the load_from_nxs method.
+
+        Parameters
+        ----------
+        file : NXlinkgroup | NXgroup
+            Opened NeXus file, in which the image is saved.
+            The file is opened with function nxopen from nexusformat library.
+        
+        key : str
+            Key of the image in the images dictionary.
+        
+        id_number : int
+            Number of the imageset. Defines the order of the imagesets in the NeXus file.
+
+        Returns
+        -------
+        full_image : HologramImage
+            A hyperspy object containing the image and its metadata.
+        """
         image = file[f"raw_data/imageset_{id_number}/raw_images/{key}"]
         metadata = json.loads(
             file[f"raw_data/imageset_{id_number}/metadata/{key}_metadata"].nxdata
@@ -545,7 +651,25 @@ class ImageSetHolo(ImageSet):
         return full_image
 
     @classmethod
-    def load_from_nxs(cls, path, id_number=0):
+    def load_from_nxs(cls, path: str, id_number: int = 0):
+        """
+        Class method that loads the imageset from the NeXus file. It utilizes 
+        the __load_image_from_nxs method.
+
+        Parameters
+        ----------
+        path : str
+            Path of the NeXus file, from which the imageset is loaded.
+        id_number : int, optional
+            Number of the imageset. Defines the order of the imagesets in the NeXus file, 
+            by default 0
+
+        Returns
+        -------
+        ImageSetHolo
+            An instance of ImageSetHolo object containing the image and its metadata,
+            also the reference image and its metadata if it is loaded.
+        """
         with nxopen(path, "r") as opened_file:
             full_image = cls.__load_image_from_nxs(
                 file=opened_file, key="image", id_number=id_number
