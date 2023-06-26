@@ -424,19 +424,19 @@ class ImageSet(ABC):
 
 
 class ImageSetHolo(ImageSet):
-    """A child class of the ImageSet class. It is used for the holography imagesets. \n
-    This class contains the methods for saving, loading and processing of the holography \n
+    """A child class of the ImageSet class. It is used for the holography imagesets. 
+    This class contains the methods for saving, loading and processing of the holography 
     imagesets. Phase calculation is implemented with the help of hyperspy library.
 
     Parameters
     ----------
     images : dict
-        Dictionary containing the images of the imageset. The keys are the names of the images. \n
+        Dictionary containing the images of the imageset. The keys are the names of the images. 
         The keys are:
-            ``image``: HologramImage - the hologram image of a sample \n
-            ``ref_image``: HologramImage - the reference image \n
-            ``wave_image``: ComplexSignal2D - the reconstructed wave image \n
-            ``unwrapped_phase``: Signal2D - the unwrapped phase image \n
+            ``image``: HologramImage - the hologram image of a sample 
+            ``ref_image``: HologramImage - the reference image 
+            ``wave_image``: ComplexSignal2D - the reconstructed wave image 
+            ``unwrapped_phase``: Signal2D - the unwrapped phase image 
     type_measurement : str
         The type of the measurement. It is used as an attribute of the NXdata group.
         by default "holography"
@@ -457,10 +457,10 @@ class ImageSetHolo(ImageSet):
         Loads the imageset from the NeXus file. It utilizes the ``__load_image_from_nxs`` method.
     phase_calculation(sb_option="upper", sb_size_scale=1, use_existing_params=False,
                         visualize=False, save_jpeg=False, path=None)
-        Method that reconstructs the phase of image. It utilizes the \n
-        ``estimate_sideband_position`` and ``estimate_sideband_size`` methods of hyperspy \n
-        library to estimate the sideband position \n
-        and size. The sideband position and size are saved in the metadata of the image. For the \n
+        Method that reconstructs the phase of image. It utilizes the 
+        ``estimate_sideband_position`` and ``estimate_sideband_size`` methods of hyperspy 
+        library to estimate the sideband position 
+        and size. The sideband position and size are saved in the metadata of the image. For the 
         phase reconstruction, the ``reconstruct_phase`` method of hyperspy library is used.
 
     """
@@ -843,16 +843,16 @@ class ImageSetHolo(ImageSet):
 
 
 class ImageSetXMCD(ImageSet):
-    """A child class of the ImageSet class. It is used for the XMCD imagesets. \n
-    This class contains the methods for saving, loading and processing of the XMCD \n
+    """A child class of the ImageSet class. It is used for the XMCD imagesets. 
+    This class contains the methods for saving, loading and processing of the XMCD 
     imagesets.
 
     Parameters
     ----------
     images : dict
-        Dictionary containing the images of the imageset. The keys are the names of the images. \n
+        Dictionary containing the images of the imageset. The keys are the names of the images. 
         The keys are:
-            ``image``: Signal2D - the XMCD image of a sample \n
+            ``image``: Signal2D - the XMCD image of a sample 
     type_measurement : str
         The type of the measurement. It is used as an attribute of the NXdata group.
         by default "xmcd"
