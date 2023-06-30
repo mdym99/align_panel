@@ -800,10 +800,10 @@ class ImageSetHolo(ImageSet):
         ]["Holography"]
         self.image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
             "sb_position"
-        ] = tuple(
+        ] = list(
             self.wave_image.metadata["Signal"]["Holography"][
                 "Reconstruction_parameters"
-            ]["sb_position"].data.astype("int")
+            ]["sb_position"].data.astype("float64")
         )
         self.image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
             "sb_size"

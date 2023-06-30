@@ -206,6 +206,6 @@ def test_save_load_2_imagesets_1ref(image_set, image_set_no_ref, tmp_path):
 
 def test__repr__(image_set):
     assert (
-        repr(image_set)
-        == "holography image set \n image file name: Hb-.dm3\n  shape: (200, 200) \n reference file name: Rb-.dm3 \n  shape: (200, 200) \n "
+        str(repr(image_set))
+        == "holography imageset \n image file name: Hb-.dm3\n  shape: (200, 200) \n reference file name: Rb-.dm3 \n  shape: (200, 200) \n "
     )
