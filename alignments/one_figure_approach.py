@@ -8,6 +8,7 @@ from align_panel.image_transformer import ImageTransformer
 from pystackreg import StackReg
 from hyperspy._signals.signal2d import estimate_image_shift
 from skimage.registration import phase_cross_correlation
+from skimage.transform import rescale
 
 def normal_round(number):
     """Round a float to the nearest integer."""
@@ -92,35 +93,26 @@ def toggle_selector(selectors,fig, centers, positions,event):
                 print(f'{name} activated.')
                 selector.set_active(True)
     if event.key == ' ':
-        for selector in selectors:
-            name = type(selector).__name__
-            if name == "CustomRectangleSelector":
-                selectors[1].set_visible(True)
-                selectors[1].draw_shape(selector.extents)
-                selectors[1]._center_handle.set_data(*selector.center) 
-                selectors[1]._edge_handles.set_data(*selector.edge_centers)
-                selectors[1]._corner_handles.set_data(*selector.corners)
-                fig.canvas.draw()
+        selectors[1].set_visible(True)
+        selectors[1].draw_shape(selectors[0].extents)
+        selectors[1]._center_handle.set_data(*selectors[0].center) 
+        selectors[1]._edge_handles.set_data(*selectors[0].edge_centers)
+        selectors[1]._corner_handles.set_data(*selectors[0].corners)
+        fig.canvas.draw()
     if event.key == 'enter':
-        for selector in selectors:
-            name = type(selector).__name__
-            if name == "UnscalableRectangleSelector":
-                positions['ref'] = np.array([normal_round(x) for x in selectors[0].extents])
-                centers['ref']= np.array([normal_round(x) for x in selectors[0].center])
-                positions['mov'] = np.array([normal_round(x) for x in selectors[1].extents])
-                centers['mov'] = np.array([normal_round(x) for x in selectors[1].center])
-                """
-                Problem with rounding the numbers.
-                Problem example:
-                if square is 20.4 pixels big - if once clicked on left corner 20.05 -> 20 right 40.45 -> 40 size is 20
-                but if other square is at 20.3 -> 20 left and 40.55 -> 41 right size is 21
-                """
-                if positions['ref'][1]-positions['ref'][0] == positions['mov'][1]-positions['mov'][0]:
-                     print("Cropped parts have the same size and are ready for alignment.")
-                else:
-                    print("Cropped parts have different size. Please select again.")
-                    print(f"Reference position: {positions['ref']}")
-                    print(f"Moving position: {positions['mov']}")
+        positions['ref'] = np.array([normal_round(x) for x in selectors[0].extents])
+        centers['ref']= np.array([normal_round(x) for x in selectors[0].center])
+        positions['mov'] = np.array([normal_round(x) for x in selectors[1].extents])
+        centers['mov'] = np.array([normal_round(x) for x in selectors[1].center])
+        shape_ref = np.array([positions['ref'][1] - positions['ref'][0], positions['ref'][3] - positions['ref'][2]])
+        shape_mov = np.array([positions['mov'][1] - positions['mov'][0], positions['mov'][3] - positions['mov'][2]])
+        if np.any(shape_ref != shape_mov):
+            positions['mov'][0] = normal_round(centers['mov'][0] - shape_ref[0]/2)
+            positions['mov'][1] = normal_round(centers['mov'][0] + shape_ref[0]/2)
+            positions['mov'][2] = normal_round(centers['mov'][1] - shape_ref[1]/2)
+            positions['mov'][3] = normal_round(centers['mov'][1] + shape_ref[1]/2)
+        print ('Images are prepared for alignment. Close the plot window to continue.')
+            
 
 def align_auto(ref_image, mov_image, align_type:str, inverse = True, sub_pixel_factor = 2):
     if inverse:
@@ -145,18 +137,21 @@ def align_auto(ref_image, mov_image, align_type:str, inverse = True, sub_pixel_f
         trans.translate(xshift=shifts[0], yshift=shifts[1])
     return trans.get_combined_transform()
 
-def crop_images(ref_image, mov_image):
+def crop_images(ref_image, mov_image, rebin = 8):
+    full_images = [ref_image.copy(), mov_image.copy()]
+    original_shape = ref_image.shape
+    resized_images = list(map(lambda image: rescale(image, scale=1/rebin, anti_aliasing=False), full_images))
+
     fig = plt.figure(layout='constrained')
     axs = fig.subplots(1,2)
     selectors = []
-    images = [ref_image, mov_image]
     centers = {'ref': None, 'mov': None}
     positions = {'ref': None, 'mov': None}
     names = ['Reference image', 'Moving image']
-    for ax, selector_class, image, name in zip(axs, [CustomRectangleSelector, UnscalableRectangleSelector], images, names):
-        ax.imshow(image, cmap = 'gray') 
-        ax.xaxis.set_tick_params(labelbottom=False)
-        ax.yaxis.set_tick_params(labelleft=False)   
+    for ax, selector_class, image, name in zip(axs, [CustomRectangleSelector, UnscalableRectangleSelector], resized_images, names):
+        ax.imshow(image, cmap = 'gray', extent = [0, original_shape[0], 0, original_shape[1]]) 
+        #ax.xaxis.set_tick_params(labelbottom=False)
+        #ax.yaxis.set_tick_params(labelleft=False)   
         ax.set_title(f"{name}")
         selectors.append(selector_class(
             ax, select_callback,
@@ -171,16 +166,16 @@ def crop_images(ref_image, mov_image):
     fig.suptitle("To select square in second image, press space. Press enter to confirm.")
     plt.show()
 
-    translation = centers['mov'] - centers['ref']
-    crop_ref = ref_image[positions['ref'][2]:positions['ref'][3], positions['ref'][0]:positions['ref'][1]]
-    crop_mov = mov_image[positions['mov'][2]:positions['mov'][3], positions['mov'][0]:positions['mov'][1]]
+    translation = centers['ref'] -centers['mov']
+    crop_ref = full_images[0][positions['ref'][2]:positions['ref'][3], positions['ref'][0]:positions['ref'][1]]
+    crop_mov = full_images[1][positions['mov'][2]:positions['mov'][3], positions['mov'][0]:positions['mov'][1]]
     return crop_ref, crop_mov, translation
 
 
 def align_auto_crop(ref_image, mov_image, align_type:str, inverse = True, sub_pixel_factor = 2):
     trans = ImageTransformer(mov_image)
     crop_ref, crop_mov, translation = crop_images(ref_image, mov_image)
-    trans.translate(xshift=translation[0], yshift=translation[1])
+    trans.translate(xshift=-translation[0], yshift=translation[1])
     auto_align_matrix = align_auto(crop_ref, crop_mov, align_type = align_type, inverse = inverse, sub_pixel_factor = sub_pixel_factor)
     trans.add_transform(auto_align_matrix)
     return trans.get_combined_transform(), trans.get_transformed_image()
@@ -192,11 +187,13 @@ if __name__ == "__main__":
     path4 = os.path.dirname(os.getcwd()) + "/data/Rb+.dm3"
     image_set1 = ImageSetHolo.load(path1, path2)
     image_set2 = ImageSetHolo.load(path3, path4)
-    #image_set1.phase_calculation()
-    #image_set2.phase_calculation()
-    image1 = image_set1.image.data
-    image2 = image_set2.image.data
-    x,image = align_auto_crop(image1, image2, "cross_corelation_hyperspy")
+    image_set1.phase_calculation()
+    image_set2.phase_calculation()
+    image1 = image_set1.unwrapped_phase.data
+    image2 = image_set2.unwrapped_phase.data
+    x,image = align_auto_crop(image1, image2, "None")
+    plt.figure('result')
     plt.imshow(image1, cmap = 'gray')
     plt.imshow(image, cmap = 'gray',alpha=0.4)
     plt.show()
+    print(x)
