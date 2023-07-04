@@ -8,7 +8,7 @@ from align_panel.image_transformer import ImageTransformer
 from pystackreg import StackReg
 from hyperspy._signals.signal2d import estimate_image_shift
 from skimage.registration import phase_cross_correlation
-from skimage.transform import rescale
+import cv2
 
 def normal_round(number):
     """Round a float to the nearest integer."""
@@ -138,9 +138,10 @@ def align_auto(ref_image, mov_image, align_type:str, inverse = True, sub_pixel_f
     return trans.get_combined_transform()
 
 def crop_images(ref_image, mov_image, rebin = 8):
-    full_images = [ref_image.copy(), mov_image.copy()]
+    full_images = [ref_image, mov_image]
     original_shape = ref_image.shape
-    resized_images = list(map(lambda image: rescale(image, scale=1/rebin, anti_aliasing=False), full_images))
+    new_shape = (int(original_shape[0]/rebin), int(original_shape[1]/rebin))
+    resized_images = list(map(lambda image: cv2.resize(image.copy(), new_shape), full_images))
 
     fig = plt.figure(layout='constrained')
     axs = fig.subplots(1,2)
@@ -149,7 +150,7 @@ def crop_images(ref_image, mov_image, rebin = 8):
     positions = {'ref': None, 'mov': None}
     names = ['Reference image', 'Moving image']
     for ax, selector_class, image, name in zip(axs, [CustomRectangleSelector, UnscalableRectangleSelector], resized_images, names):
-        ax.imshow(image, cmap = 'gray', extent = [0, original_shape[0], 0, original_shape[1]]) 
+        ax.imshow(image, cmap = 'gray', extent = [0, original_shape[0], original_shape[1], 0]) 
         #ax.xaxis.set_tick_params(labelbottom=False)
         #ax.yaxis.set_tick_params(labelleft=False)   
         ax.set_title(f"{name}")
@@ -166,7 +167,7 @@ def crop_images(ref_image, mov_image, rebin = 8):
     fig.suptitle("To select square in second image, press space. Press enter to confirm.")
     plt.show()
 
-    translation = centers['ref'] -centers['mov']
+    translation = centers['mov']-centers['ref']
     crop_ref = full_images[0][positions['ref'][2]:positions['ref'][3], positions['ref'][0]:positions['ref'][1]]
     crop_mov = full_images[1][positions['mov'][2]:positions['mov'][3], positions['mov'][0]:positions['mov'][1]]
     return crop_ref, crop_mov, translation
@@ -175,7 +176,7 @@ def crop_images(ref_image, mov_image, rebin = 8):
 def align_auto_crop(ref_image, mov_image, align_type:str, inverse = True, sub_pixel_factor = 2):
     trans = ImageTransformer(mov_image)
     crop_ref, crop_mov, translation = crop_images(ref_image, mov_image)
-    trans.translate(xshift=-translation[0], yshift=translation[1])
+    trans.translate(xshift=translation[0], yshift=translation[1])
     auto_align_matrix = align_auto(crop_ref, crop_mov, align_type = align_type, inverse = inverse, sub_pixel_factor = sub_pixel_factor)
     trans.add_transform(auto_align_matrix)
     return trans.get_combined_transform(), trans.get_transformed_image()
@@ -191,9 +192,8 @@ if __name__ == "__main__":
     image_set2.phase_calculation()
     image1 = image_set1.unwrapped_phase.data
     image2 = image_set2.unwrapped_phase.data
-    x,image = align_auto_crop(image1, image2, "None")
+    x,image = align_auto_crop(image1, image2, "cross_corelation_hyperspy")
     plt.figure('result')
     plt.imshow(image1, cmap = 'gray')
     plt.imshow(image, cmap = 'gray',alpha=0.4)
     plt.show()
-    print(x)
