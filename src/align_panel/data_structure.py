@@ -367,6 +367,24 @@ class ImageSet(ABC):
                     f"raw_data/imageset_{id_number}/metadata/{name_of_file}"
                 ] = NXfield(notes.read())
 
+    @staticmethod
+    def read_notes(path_file: str, name: str, id_number: int = 0):
+        """Method that reads the notes from the NeXus file and prints them in the console.
+
+        Parameters
+        ----------
+        path_file : str
+            Path of the NeXus file, from which the notes are read.
+        name : str
+            Name of the notes.
+        id_number : int, optional
+            Number of the imageset. Defines the order of the imagesets in the NeXus file,
+            by default 0
+            
+        """
+        with nxopen(path_file, "rw") as oppened_file:
+            print(oppened_file['raw_data'][f'imageset_{id_number}']['metadata'][name])
+
     def images_content(self):
         """Generator that yields the images of the imageset.
 
