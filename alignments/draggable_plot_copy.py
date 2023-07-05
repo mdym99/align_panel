@@ -12,18 +12,20 @@ import os
 from align_panel.data_structure import ImageSetHolo
 import cv2
 import itertools
+from align_panel.image_transformer import ImageTransformer
+import numpy as np
 
 class DraggablePlotExample(object):
     u""" An example of plot with draggable markers """
 
-    def __init__(self, ref_image, mov_image):
+    def __init__(self, ref_image, mov_image, rebin = 8):
         self._figure, self._axes, self._line, self._line2 = None, None, None, None
         self._dragging_point = None
         self._colors = itertools.cycle(['tab:blue','tab:orange','tab:green','tab:red','tab:purple','tab:brown','tab:pink','tab:gray','tab:olive','tab:cyan'])
         self._points = []
         self._mov_points = []
         self._image_dict = {'ref': ref_image, 'mov': mov_image}
-        self._rebin = 8
+        self._rebin = rebin
         
 
         self._init_plot()
@@ -40,6 +42,7 @@ class DraggablePlotExample(object):
             ax.xaxis.set_tick_params(labelbottom=False)
             ax.yaxis.set_tick_params(labelleft=False)
             ax.set_title(name)
+        #self._figure.canvas.blit(self._figure.bbox)
         
 
         self._figure.canvas.mpl_connect('button_press_event', self._on_click)
@@ -225,10 +228,15 @@ if __name__ == "__main__":
     path4 = os.path.dirname(os.getcwd()) + "/data/Rb+.dm3"
     image_set1 = ImageSetHolo.load(path1, path2)
     image_set2 = ImageSetHolo.load(path3, path4)
-    #image_set1.phase_calculation()
-    #image_set2.phase_calculation()
-    image1 = image_set1.image.data
-    image2 = image_set2.image.data
+    image_set1.phase_calculation()
+    image_set2.phase_calculation()
+    image1 = image_set1.unwrapped_phase.data
+    image2 = image_set2.unwrapped_phase.data
     result = DraggablePlotExample(image1, image2)
-    print(result._points)
-    print(result._mov_points)
+    trans = ImageTransformer(image2)
+    trans.estimate_transform(np.array(result._points), np.array(result._mov_points),method='euclidean')
+    final_image = trans.get_transformed_image()
+    plt.figure('result')
+    plt.imshow(image1, cmap='gray')
+    plt.imshow(final_image, cmap='gray',alpha=0.5)
+    plt.show()
