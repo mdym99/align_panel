@@ -187,8 +187,11 @@ class DraggablePlotExample(object):
         if event.xdata is None or event.ydata is None:
             return
         if event.inaxes in [self._axes[0]]:
-            self._remove_point(self._points,*self._dragging_point)
-            self._dragging_point = self._add_point(self._points,event)
+            for i in range(len(self._points)):
+                if self._points[i] == self._dragging_point:
+                    self._points[i] = (int(event.xdata), int(event.ydata))
+                    self._dragging_point  = (int(event.xdata), int(event.ydata))
+                    break
             self._update_plot()
 
     def _on_motion_2(self, event):
@@ -201,8 +204,11 @@ class DraggablePlotExample(object):
         if event.xdata is None or event.ydata is None:
             return
         if event.inaxes in [self._axes[1]]:
-            self._remove_point(self._mov_points,*self._dragging_point)
-            self._dragging_point = self._add_point(self._mov_points,event)
+            for i in range(len(self._mov_points)):
+                if self._mov_points[i] == self._dragging_point:
+                    self._mov_points[i] = (int(event.xdata), int(event.ydata))
+                    self._dragging_point  = (int(event.xdata), int(event.ydata))
+                    break
             self._update_plot2()
 
 if __name__ == "__main__":
@@ -212,8 +218,8 @@ if __name__ == "__main__":
     path4 = os.path.dirname(os.getcwd()) + "/data/Rb+.dm3"
     image_set1 = ImageSetHolo.load(path1, path2)
     image_set2 = ImageSetHolo.load(path3, path4)
-    #image_set1.phase_calculation()
-    #image_set2.phase_calculation()
-    image1 = image_set1.image.data
-    image2 = image_set2.image.data
+    image_set1.phase_calculation()
+    image_set2.phase_calculation()
+    image1 = image_set1.unwrapped_phase.data
+    image2 = image_set2.unwrapped_phase.data
     result = DraggablePlotExample(image1, image2)
