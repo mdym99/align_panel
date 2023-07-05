@@ -53,6 +53,9 @@ class ImageSet(ABC):
     add_notes(path_notes, path_file, id_number=0)
         Adds notes to the NeXus file. Path_notes is the path of the file containing the notes,
         path_file is the path of the NeXus file and id_number is the order number of the imageset.
+    read_notes(path_file, name, id_number= 0):
+        Reads the notes from the NeXus file. Path_file is the path of the NeXus file,
+        name is the name of the notes and id_number is the order number of the imageset.
     images_content()
         Generator that yields the images of the imageset, that are created.
     set_axes(axis1_name: str, axis2_name: str, units, scale=None)
