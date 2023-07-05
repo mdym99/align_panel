@@ -36,7 +36,9 @@ def on_press(fig, trans, image1, event):
         trans.uniform_scale_centered(scale_factor=scale_size)
     elif event.key == 'enter':
         print(trans.get_combined_transform())
-
+    elif event.key == 'escape':
+        trans.clear_transforms()
+        #trans.add_null_transform()
 
     trans_image = trans.get_transformed_image()
     image1.set_data(trans_image)
