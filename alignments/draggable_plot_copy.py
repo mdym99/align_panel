@@ -22,17 +22,21 @@ class DraggablePlotExample(object):
         self._points = []
         self._mov_points = []
         self._image_dict = {'ref': ref_image, 'mov': mov_image}
+        self._rebin = 8
         
 
         self._init_plot()
         
 
     def _init_plot(self):
+        old_shape = self._image_dict['ref'].shape
+        new_shape = (int(old_shape[1]/self._rebin), int(old_shape[0]/self._rebin))
+        resized_images = list(map(lambda image: cv2.resize(image.copy(), new_shape), self._image_dict.values()))
         self._figure, self._axes = plt.subplots(1, 2)
-        for ax, image in zip(self._axes, self._image_dict.values()):
-            ax.imshow(image, cmap='gray')
-            ax.xaxis.set_tick_params(labelbottom=False)
-            ax.yaxis.set_tick_params(labelleft=False)
+        for ax, image in zip(self._axes, resized_images):
+            ax.imshow(image, cmap='gray', extent = [0, old_shape[0], old_shape[0], 0])
+            #ax.xaxis.set_tick_params(labelbottom=False)
+            #ax.yaxis.set_tick_params(labelleft=False)
         
 
         self._figure.canvas.mpl_connect('button_press_event', self._on_click)
@@ -102,7 +106,7 @@ class DraggablePlotExample(object):
         :rtype: ((int, int)|None)
         :return: (x, y) if there are any point around mouse else None
         """
-        distance_threshold = 300.0
+        distance_threshold = 150.0
         nearest_point = None
         min_distance = math.sqrt(2 * (100 ** 2))
         for x, y in points:
@@ -218,8 +222,10 @@ if __name__ == "__main__":
     path4 = os.path.dirname(os.getcwd()) + "/data/Rb+.dm3"
     image_set1 = ImageSetHolo.load(path1, path2)
     image_set2 = ImageSetHolo.load(path3, path4)
-    image_set1.phase_calculation()
-    image_set2.phase_calculation()
-    image1 = image_set1.unwrapped_phase.data
-    image2 = image_set2.unwrapped_phase.data
+    #image_set1.phase_calculation()
+    #image_set2.phase_calculation()
+    image1 = image_set1.image.data
+    image2 = image_set2.image.data
     result = DraggablePlotExample(image1, image2)
+    print(result._points)
+    print(result._mov_points)
