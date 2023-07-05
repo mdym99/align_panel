@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backend_bases import MouseEvent
 import os
 from align_panel.data_structure import ImageSetHolo
-
+import cv2
 
 class DraggablePlotExample(object):
     u""" An example of plot with draggable markers """
@@ -19,8 +19,8 @@ class DraggablePlotExample(object):
         self._figure, self._axes, self._line, self._line2 = None, None, None, None
         self._dragging_point = None
         self._colors = ['tab:blue','tab:orange','tab:green','tab:red','tab:purple','tab:brown','tab:pink','tab:gray','tab:olive','tab:cyan']
-        self._points = {}
-        self._mov_points = {}
+        self._points = []
+        self._mov_points = []
         self._image_dict = {'ref': ref_image, 'mov': mov_image}
         
 
@@ -49,7 +49,7 @@ class DraggablePlotExample(object):
         if not self._points:
             self._line.set_data([], [])
         else:
-            x, y = zip(*sorted(self._points.items()))
+            x, y = zip(*(self._points))
             # Add new plot
             if not self._line:
                 self._line, = self._axes[0].plot(x, y,'.', markersize=13)
@@ -62,7 +62,7 @@ class DraggablePlotExample(object):
         if not self._mov_points:
             self._line2.set_data([], [])
         else:
-            x, y = zip(*sorted(self._mov_points.items()))
+            x, y = zip(*(self._mov_points))
             # Add new plot
             if not self._line2:
                 self._line2, = self._axes[1].plot(x, y,'.', markersize=13)
@@ -74,12 +74,27 @@ class DraggablePlotExample(object):
     def _add_point(self, points, x, y=None):
         if isinstance(x, MouseEvent):
             x, y = int(x.xdata), int(x.ydata)
-        points[x] = y
+        points.append((x, y))
         return x, y
 
     def _remove_point(self,points, x,_):
-        if x in points:
-            points.pop(x)
+        for point in points:
+            if point[0] == x:
+                points.remove(point)
+
+    def _remove_point_1(self, x,_):
+            for i in range(len(self._points)):
+                if self._points[i][0] == x:
+                    self._points.pop(i)
+                    self._mov_points.pop(i)
+                    break
+    def _remove_point_2(self, x,_):
+            for i in range(len(self._mov_points)):
+                if self._mov_points[i][0] == x:
+                    self._points.pop(i)
+                    self._mov_points.pop(i)
+                    break
+            
 
     def _find_neighbor_point(self,points, event):
         u""" Find point around mouse position
@@ -90,7 +105,7 @@ class DraggablePlotExample(object):
         distance_threshold = 300.0
         nearest_point = None
         min_distance = math.sqrt(2 * (100 ** 2))
-        for x, y in points.items():
+        for x, y in points:
             distance = math.hypot(event.xdata - x, event.ydata - y)
             if distance < min_distance:
                 min_distance = distance
@@ -119,8 +134,8 @@ class DraggablePlotExample(object):
         elif event.button == 3 and event.inaxes in [self._axes[0]]:
             point = self._find_neighbor_point(self._points, event)
             if point:
-                self._remove_point(self._points,*point)
-                self._remove_point(self._mov_points,*point)
+                self. _remove_point_1(*point)
+                #self._remove_point(self._mov_points,*point)
                 self._update_plot()
                 self._update_plot2()
         # right click in 2. image
@@ -139,8 +154,8 @@ class DraggablePlotExample(object):
          elif event.button == 3 and event.inaxes in [self._axes[1]]:
             point = self._find_neighbor_point(self._mov_points, event)
             if point:
-                self._remove_point(self._points,*point)
-                self._remove_point(self._mov_points,*point)
+                self._remove_point_2(*point)
+                #self._remove_point(self._mov_points,*point)
                 self._update_plot()
                 self._update_plot2()
 
