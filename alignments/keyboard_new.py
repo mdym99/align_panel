@@ -3,6 +3,7 @@ Run in prototypes folder !!!
 """
 
 import sys
+import cv2
 from functools import partial
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,7 +14,7 @@ import matplotlib as mpl
 mpl.rcParams['path.simplify'] = True
 mpl.rcParams['path.simplify_threshold'] = 1.0
 from align_panel.image_transformer import ImageTransformer
-from skimage.transform import rescale
+
 
 def on_press(fig, trans, image1, event):
 
@@ -57,8 +58,10 @@ def update_scale(val):
     scale_size = val
 
 def align_keyboard_input(ref_image, mov_image, rebin = 8):
-    ref_image = rescale(ref_image, 1/rebin, anti_aliasing=False)
-    mov_image = rescale(mov_image, 1/rebin, anti_aliasing=False)
+    old_shape = ref_image.shape
+    new_shape = (int(old_shape[1]/rebin), int(old_shape[0]/rebin))
+    ref_image = cv2.resize(ref_image, new_shape)
+    mov_image = cv2.resize(mov_image, new_shape)
     fig, ax = plt.subplots()
     trans = ImageTransformer(mov_image)
     image1 = plt.imshow(mov_image, cmap = 'gray', interpolation='none')
