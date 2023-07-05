@@ -436,6 +436,10 @@ class ImageSetHolo(ImageSet):
             ``image``: HologramImage - the hologram image of a sample 
             ``ref_image``: HologramImage - the reference image 
             ``wave_image``: ComplexSignal2D - the reconstructed wave image 
+                            containing:     amplitude
+                                            phase
+                                            real part
+                                            imaginary part
             ``unwrapped_phase``: Signal2D - the unwrapped phase image 
     type_measurement : str
         The type of the measurement. It is used as an attribute of the NXdata group.
