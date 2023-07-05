@@ -11,6 +11,7 @@ from matplotlib.backend_bases import MouseEvent
 import os
 from align_panel.data_structure import ImageSetHolo
 import cv2
+import itertools
 
 class DraggablePlotExample(object):
     u""" An example of plot with draggable markers """
@@ -18,7 +19,7 @@ class DraggablePlotExample(object):
     def __init__(self, ref_image, mov_image):
         self._figure, self._axes, self._line, self._line2 = None, None, None, None
         self._dragging_point = None
-        self._colors = ['tab:blue','tab:orange','tab:green','tab:red','tab:purple','tab:brown','tab:pink','tab:gray','tab:olive','tab:cyan']
+        self._colors = itertools.cycle(['tab:blue','tab:orange','tab:green','tab:red','tab:purple','tab:brown','tab:pink','tab:gray','tab:olive','tab:cyan'])
         self._points = []
         self._mov_points = []
         self._image_dict = {'ref': ref_image, 'mov': mov_image}
@@ -31,12 +32,14 @@ class DraggablePlotExample(object):
     def _init_plot(self):
         old_shape = self._image_dict['ref'].shape
         new_shape = (int(old_shape[1]/self._rebin), int(old_shape[0]/self._rebin))
+        names = ['Reference image', 'Moving image']
         resized_images = list(map(lambda image: cv2.resize(image.copy(), new_shape), self._image_dict.values()))
         self._figure, self._axes = plt.subplots(1, 2)
-        for ax, image in zip(self._axes, resized_images):
+        for ax, image, name in zip(self._axes, resized_images, names):
             ax.imshow(image, cmap='gray', extent = [0, old_shape[0], old_shape[0], 0])
-            #ax.xaxis.set_tick_params(labelbottom=False)
-            #ax.yaxis.set_tick_params(labelleft=False)
+            ax.xaxis.set_tick_params(labelbottom=False)
+            ax.yaxis.set_tick_params(labelleft=False)
+            ax.set_title(name)
         
 
         self._figure.canvas.mpl_connect('button_press_event', self._on_click)
@@ -106,7 +109,7 @@ class DraggablePlotExample(object):
         :rtype: ((int, int)|None)
         :return: (x, y) if there are any point around mouse else None
         """
-        distance_threshold = 150.0
+        distance_threshold = 100.0
         nearest_point = None
         min_distance = math.sqrt(2 * (100 ** 2))
         for x, y in points:
