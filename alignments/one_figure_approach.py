@@ -162,7 +162,6 @@ def align_auto(ref_image, mov_image, align_type: str, inverse=True, sub_pixel_fa
 def crop_images(ref_image, mov_image, rebin=8):
     full_images = [ref_image, mov_image]
     original_shape = ref_image.shape
-    new_shape = (int(original_shape[0] / rebin), int(original_shape[1] / rebin))
     resized_images = list(
         map(lambda image: rescale(image.copy(), 1/rebin, anti_aliasing=False), full_images)
     )
@@ -180,7 +179,7 @@ def crop_images(ref_image, mov_image, rebin=8):
         names,
     ):
         ax.imshow(
-            image, cmap="gray", extent=[0, original_shape[0], original_shape[1], 0]
+            image, cmap="gray", extent=[0, original_shape[1], original_shape[0], 0]
         )
         # ax.xaxis.set_tick_params(labelbottom=False)
         # ax.yaxis.set_tick_params(labelleft=False)

@@ -33,13 +33,12 @@ class Point_definition_plots(object):
         
 
     def _init_plot(self):
-        old_shape = self._image_dict['ref'].shape
-        new_shape = (int(old_shape[1]/self._rebin), int(old_shape[0]/self._rebin))
+        original_shape = self._image_dict['ref'].shape
         names = ['Reference image', 'Moving image']
         resized_images = list(map(lambda image: rescale(image.copy(), 1/self._rebin, anti_aliasing=False), self._image_dict.values()))
         self._figure, self._axes = plt.subplots(1, 2)
         for ax, image, name in zip(self._axes, resized_images, names):
-            ax.imshow(image, cmap='gray', extent = [0, old_shape[0], old_shape[0], 0])
+            ax.imshow(image, cmap='gray', extent = [0, original_shape[1], original_shape[0], 0])
             #ax.xaxis.set_tick_params(labelbottom=False)
             #ax.yaxis.set_tick_params(labelleft=False)
             ax.set_title(name)

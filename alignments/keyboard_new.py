@@ -60,7 +60,6 @@ def update_scale(val):
 
 def align_keyboard_input(ref_image, mov_image, rebin = 8):
     old_shape = ref_image.shape
-    new_shape = (int(old_shape[1]/rebin), int(old_shape[0]/rebin))
     ref_image = rescale(ref_image.copy(), 1/rebin, anti_aliasing=False)
     mov_image = rescale(mov_image.copy(), 1/rebin, anti_aliasing=False)
     fig, ax = plt.subplots()
