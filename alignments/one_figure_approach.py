@@ -1,11 +1,12 @@
 import os
 from functools import partial
-import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from pystackreg import StackReg
 from hyperspy._signals.signal2d import estimate_image_shift
 from skimage.registration import phase_cross_correlation
+from skimage.transform import rescale
+from skimage.io import imread
 from matplotlib.widgets import RectangleSelector
 from align_panel.data_structure import ImageSetHolo
 from align_panel.image_transformer import ImageTransformer
@@ -163,7 +164,7 @@ def crop_images(ref_image, mov_image, rebin=8):
     original_shape = ref_image.shape
     new_shape = (int(original_shape[0] / rebin), int(original_shape[1] / rebin))
     resized_images = list(
-        map(lambda image: cv2.resize(image.copy(), new_shape), full_images)
+        map(lambda image: rescale(image.copy(), 1/rebin, anti_aliasing=False), full_images)
     )
 
     fig = plt.figure(layout="constrained")
@@ -248,8 +249,8 @@ if __name__ == "__main__":
     # image2 = image_set2.unwrapped_phase.data
     path1 = os.path.dirname(os.getcwd()) + "/data/unwrapped_phase_1.png"
     path2 = os.path.dirname(os.getcwd()) + "/data/unwrapped_phase_2.png"
-    image1 = cv2.imread(path1,0)
-    image2 = cv2.imread(path2,0)
+    image1 = imread(path1,0)
+    image2 = imread(path2,0)
     x, image = align_auto_crop(image1, image2, "cross_corelation_hyperspy")
     plt.figure("result")
     plt.imshow(image1, cmap="gray")

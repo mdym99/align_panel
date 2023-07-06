@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 from matplotlib.backend_bases import MouseEvent
 import os
 from align_panel.data_structure import ImageSetHolo
-import cv2
+from skimage.transform import rescale
+from skimage.io import imread
 import itertools
 from align_panel.image_transformer import ImageTransformer
 import numpy as np
@@ -35,7 +36,7 @@ class Point_definition_plots(object):
         old_shape = self._image_dict['ref'].shape
         new_shape = (int(old_shape[1]/self._rebin), int(old_shape[0]/self._rebin))
         names = ['Reference image', 'Moving image']
-        resized_images = list(map(lambda image: cv2.resize(image.copy(), new_shape), self._image_dict.values()))
+        resized_images = list(map(lambda image: rescale(image.copy(), 1/self._rebin, anti_aliasing=False), self._image_dict.values()))
         self._figure, self._axes = plt.subplots(1, 2)
         for ax, image, name in zip(self._axes, resized_images, names):
             ax.imshow(image, cmap='gray', extent = [0, old_shape[0], old_shape[0], 0])
@@ -246,8 +247,8 @@ if __name__ == "__main__":
     # image2 = image_set2.image.data
     path1 = os.path.dirname(os.getcwd()) + "/data/unwrapped_phase_1.png"
     path2 = os.path.dirname(os.getcwd()) + "/data/unwrapped_phase_2.png"
-    image1 = cv2.imread(path1,0)
-    image2 = cv2.imread(path2,0)
+    image1 = imread(path1,0)
+    image2 = imread(path2,0)
     # result = Point_definition_plots(image1, image2)
     # trans = ImageTransformer(image2)
     # trans.estimate_transform(result._points, result._mov_points,method='euclidean')

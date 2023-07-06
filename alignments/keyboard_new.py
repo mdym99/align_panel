@@ -3,13 +3,14 @@ Run in prototypes folder !!!
 """
 
 import sys
-import cv2
 from functools import partial
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button
 import os
 from align_panel.data_structure import ImageSetHolo
+from skimage.transform import rescale
+from skimage.io import imread
 import matplotlib as mpl
 mpl.rcParams['path.simplify'] = True
 mpl.rcParams['path.simplify_threshold'] = 1.0
@@ -60,8 +61,8 @@ def update_scale(val):
 def align_keyboard_input(ref_image, mov_image, rebin = 8):
     old_shape = ref_image.shape
     new_shape = (int(old_shape[1]/rebin), int(old_shape[0]/rebin))
-    ref_image = cv2.resize(ref_image, new_shape)
-    mov_image = cv2.resize(mov_image, new_shape)
+    ref_image = rescale(ref_image.copy(), 1/rebin, anti_aliasing=False)
+    mov_image = rescale(mov_image.copy(), 1/rebin, anti_aliasing=False)
     fig, ax = plt.subplots()
     trans = ImageTransformer(mov_image)
     image1 = plt.imshow(mov_image, cmap = 'gray', interpolation='none')
@@ -106,8 +107,8 @@ if __name__ == '__main__':
     # im2 = image_set2.unwrapped_phase.data
     path1 = os.path.dirname(os.getcwd()) + "/data/unwrapped_phase_1.png"
     path2 = os.path.dirname(os.getcwd()) + "/data/unwrapped_phase_2.png"
-    image1 = cv2.imread(path1,0)
-    image2 = cv2.imread(path2,0)
+    image1 = imread(path1,0)
+    image2 = imread(path2,0)
     step_size = 5
     rot_size = 2.5
     scale_size = 0.75
