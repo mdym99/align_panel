@@ -94,18 +94,22 @@ def align_keyboard_input(ref_image, mov_image, rebin = 8):
 
 
 if __name__ == '__main__':
-    path1 = os.path.dirname(os.getcwd())+'/data/Hb-.dm3'
-    path2 = os.path.dirname(os.getcwd())+'/data/Rb-.dm3'
-    path3 = os.path.dirname(os.getcwd())+'/data/Hb+.dm3'
-    path4 = os.path.dirname(os.getcwd())+'/data/Rb+.dm3'
-    image_set1 = ImageSetHolo.load(path1, path2)
-    image_set2 = ImageSetHolo.load(path3, path4)
-    image_set1.phase_calculation()
-    image_set2.phase_calculation()
-    im1 = image_set1.unwrapped_phase.data
-    im2 = image_set2.unwrapped_phase.data
+    # path1 = os.path.dirname(os.getcwd())+'/data/Hb-.dm3'
+    # path2 = os.path.dirname(os.getcwd())+'/data/Rb-.dm3'
+    # path3 = os.path.dirname(os.getcwd())+'/data/Hb+.dm3'
+    # path4 = os.path.dirname(os.getcwd())+'/data/Rb+.dm3'
+    # image_set1 = ImageSetHolo.load(path1, path2)
+    # image_set2 = ImageSetHolo.load(path3, path4)
+    # image_set1.phase_calculation()
+    # image_set2.phase_calculation()
+    # im1 = image_set1.unwrapped_phase.data
+    # im2 = image_set2.unwrapped_phase.data
+    path1 = os.path.dirname(os.getcwd()) + "/data/unwrapped_phase_1.png"
+    path2 = os.path.dirname(os.getcwd()) + "/data/unwrapped_phase_2.png"
+    image1 = cv2.imread(path1,0)
+    image2 = cv2.imread(path2,0)
     step_size = 5
     rot_size = 2.5
     scale_size = 0.75
-    x = align_keyboard_input(im1, im2)
+    x = align_keyboard_input(image1, image2)
     print(x.params)

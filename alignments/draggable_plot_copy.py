@@ -53,7 +53,8 @@ class DraggablePlotExample(object):
         self._figure.canvas.mpl_connect('motion_notify_event', self._on_motion_2)
 
         plt.show()
-
+        self._points = np.array(self._points).reshape(-1,2)
+        self._mov_points = np.array(self._mov_points).reshape(-1,2)
 
     def _update_plot(self):
         if not self._points:
@@ -62,7 +63,7 @@ class DraggablePlotExample(object):
             x, y = zip(*(self._points))
             # Add new plot
             if not self._line:
-                self._line, = self._axes[0].plot(x, y,'.', markersize=13)
+                self._line, = self._axes[0].plot(x, y,'.', markersize=13, color = 'tab:orange')
             # Update current plot
             else:
                 self._line.set_data(x, y)
@@ -75,7 +76,7 @@ class DraggablePlotExample(object):
             x, y = zip(*(self._mov_points))
             # Add new plot
             if not self._line2:
-                self._line2, = self._axes[1].plot(x, y,'.', markersize=13)
+                self._line2, = self._axes[1].plot(x, y,'.', markersize=13, color = 'tab:orange')
             # Update current plot
             else:
                 self._line2.set_data(x, y)
@@ -222,19 +223,23 @@ class DraggablePlotExample(object):
             self._update_plot2()
 
 if __name__ == "__main__":
-    path1 = os.path.dirname(os.getcwd()) + "/data/Hb-.dm3"
-    path2 = os.path.dirname(os.getcwd()) + "/data/Rb-.dm3"
-    path3 = os.path.dirname(os.getcwd()) + "/data/Hb+.dm3"
-    path4 = os.path.dirname(os.getcwd()) + "/data/Rb+.dm3"
-    image_set1 = ImageSetHolo.load(path1, path2)
-    image_set2 = ImageSetHolo.load(path3, path4)
-    image_set1.phase_calculation()
-    image_set2.phase_calculation()
-    image1 = image_set1.unwrapped_phase.data
-    image2 = image_set2.unwrapped_phase.data
+    # path1 = os.path.dirname(os.getcwd()) + "/data/Hb-.dm3"
+    # path2 = os.path.dirname(os.getcwd()) + "/data/Rb-.dm3"
+    # path3 = os.path.dirname(os.getcwd()) + "/data/Hb+.dm3"
+    # path4 = os.path.dirname(os.getcwd()) + "/data/Rb+.dm3"
+    # image_set1 = ImageSetHolo.load(path1, path2)
+    # image_set2 = ImageSetHolo.load(path3, path4)
+    # image_set1.phase_calculation()
+    # image_set2.phase_calculation()
+    # image1 = image_set1.image.data
+    # image2 = image_set2.image.data
+    path1 = os.path.dirname(os.getcwd()) + "/data/unwrapped_phase_1.png"
+    path2 = os.path.dirname(os.getcwd()) + "/data/unwrapped_phase_2.png"
+    image1 = cv2.imread(path1,0)
+    image2 = cv2.imread(path2,0)
     result = DraggablePlotExample(image1, image2)
     trans = ImageTransformer(image2)
-    trans.estimate_transform(np.array(result._points), np.array(result._mov_points),method='euclidean')
+    trans.estimate_transform(result._points, result._mov_points,method='euclidean')
     final_image = trans.get_transformed_image()
     plt.figure('result')
     plt.imshow(image1, cmap='gray')
