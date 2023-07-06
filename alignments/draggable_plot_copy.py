@@ -15,10 +15,10 @@ import itertools
 from align_panel.image_transformer import ImageTransformer
 import numpy as np
 
-class DraggablePlotExample(object):
+class Point_definition_plots(object):
     u""" An example of plot with draggable markers """
 
-    def __init__(self, ref_image, mov_image, rebin = 8):
+    def __init__(self, ref_image: np.array, mov_image: np.array , rebin: int):
         self._figure, self._axes, self._line, self._line2 = None, None, None, None
         self._dragging_point = None
         self._colors = itertools.cycle(['tab:blue','tab:orange','tab:green','tab:red','tab:purple','tab:brown','tab:pink','tab:gray','tab:olive','tab:cyan'])
@@ -39,8 +39,8 @@ class DraggablePlotExample(object):
         self._figure, self._axes = plt.subplots(1, 2)
         for ax, image, name in zip(self._axes, resized_images, names):
             ax.imshow(image, cmap='gray', extent = [0, old_shape[0], old_shape[0], 0])
-            ax.xaxis.set_tick_params(labelbottom=False)
-            ax.yaxis.set_tick_params(labelleft=False)
+            #ax.xaxis.set_tick_params(labelbottom=False)
+            #ax.yaxis.set_tick_params(labelleft=False)
             ax.set_title(name)
         #self._figure.canvas.blit(self._figure.bbox)
         
@@ -222,6 +222,17 @@ class DraggablePlotExample(object):
                     break
             self._update_plot2()
 
+
+def points_alignments(ref_image: np.array, mov_image: np.array, rebin: int, align_method: str):
+    trans = ImageTransformer(mov_image)
+    result_points = Point_definition_plots(ref_image.copy(), mov_image.copy(), rebin)
+    trans.estimate_transform(result_points._points, result_points._mov_points, align_method)
+    final_image = trans.get_transformed_image()
+    matrix = trans.get_combined_transform()
+    return final_image, matrix
+
+
+
 if __name__ == "__main__":
     # path1 = os.path.dirname(os.getcwd()) + "/data/Hb-.dm3"
     # path2 = os.path.dirname(os.getcwd()) + "/data/Rb-.dm3"
@@ -237,11 +248,14 @@ if __name__ == "__main__":
     path2 = os.path.dirname(os.getcwd()) + "/data/unwrapped_phase_2.png"
     image1 = cv2.imread(path1,0)
     image2 = cv2.imread(path2,0)
-    result = DraggablePlotExample(image1, image2)
-    trans = ImageTransformer(image2)
-    trans.estimate_transform(result._points, result._mov_points,method='euclidean')
-    final_image = trans.get_transformed_image()
+    # result = Point_definition_plots(image1, image2)
+    # trans = ImageTransformer(image2)
+    # trans.estimate_transform(result._points, result._mov_points,method='euclidean')
+    # final_image = trans.get_transformed_image()
+
+    final_image, matrix = points_alignments(image1, image2, 16, 'euclidean')
     plt.figure('result')
     plt.imshow(image1, cmap='gray')
     plt.imshow(final_image, cmap='gray',alpha=0.5)
     plt.show()
+    print(matrix)
