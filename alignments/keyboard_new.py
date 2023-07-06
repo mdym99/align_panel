@@ -58,8 +58,7 @@ def update_scale(val):
     global scale_size
     scale_size = val
 
-def align_keyboard_input(ref_image, mov_image, rebin = 8):
-    old_shape = ref_image.shape
+def align_keyboard_input(ref_image: np.array, mov_image: np.array, rebin: int = 8):
     ref_image = rescale(ref_image.copy(), 1/rebin, anti_aliasing=False)
     mov_image = rescale(mov_image.copy(), 1/rebin, anti_aliasing=False)
     fig, ax = plt.subplots()
