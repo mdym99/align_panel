@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="align_panel",
-    version='0.0.2',
+    version='0.0.4',
     license='MIT',
     include_package_data=True,
     zip_safe=False,
