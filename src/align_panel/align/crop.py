@@ -1,4 +1,4 @@
-import os
+
 from functools import partial
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,15 +6,12 @@ from pystackreg import StackReg
 from hyperspy._signals.signal2d import estimate_image_shift
 from skimage.registration import phase_cross_correlation
 from skimage.transform import rescale
-from skimage.io import imread
 from matplotlib.widgets import RectangleSelector
-from align_panel.data_structure import ImageSetHolo
 from align_panel.image_transformer import ImageTransformer
 
 
 
-
-def normal_round(number):
+def normal_round(number: float):
     """Round a float to the nearest integer."""
     return int(number + 0.5)
 
@@ -23,10 +20,11 @@ class CustomRectangleSelector(RectangleSelector):
     def _onmove(self, event):
         """
         Redefining the _onmove method to prevent the rectangle from changing
-        shape when moving the center handle outside of the image.
-        With this function, the rectangle will not change size.
-        """
+        shape when moving the center handle when some part of the rectangle is 
+        outside of the image. With this function, the rectangle will not change size.
 
+        """
+        
         # Start bbox
         s_x0, s_x1, s_y0, s_y1 = self.extents
         start_width = np.float16(s_x1 - s_x0)
@@ -52,7 +50,7 @@ class CustomRectangleSelector(RectangleSelector):
         self.extents = e_x0, e_x1, e_y0, e_y1
 
 
-class UnscalableRectangleSelector(CustomRectangleSelector):
+class UnscalableRectangleSelector(CustomRectangleSelector): # need for this class?
     """
     Redefining the extents setter function. With this approach, the rectangle
     will not change size, but still be moveable.
@@ -72,8 +70,8 @@ class UnscalableRectangleSelector(CustomRectangleSelector):
         self._draw_shape(extents)
         if self._interactive:
             # Update displayed handles
-            self._corner_handles.set_data(*self.corners)  # no corners
-            self._edge_handles.set_data(*self.edge_centers)  # no edges
+            self._corner_handles.set_data(*self.corners)  # no corners - comment
+            self._edge_handles.set_data(*self.edge_centers)  # no edges - comment
             self._center_handle.set_data(*self.center)  # only center for moving
         self.set_visible(self.visible)
         self.update()
@@ -159,7 +157,7 @@ def align_auto(ref_image, mov_image, align_type: str, inverse=True, sub_pixel_fa
     return trans.get_combined_transform()
 
 
-def crop_images(ref_image, mov_image, rebin=8):
+def crop_images(ref_image, mov_image, rebin=8, show_in = True):
     full_images = [ref_image, mov_image]
     original_shape = ref_image.shape
     resized_images = list(
@@ -204,25 +202,31 @@ def crop_images(ref_image, mov_image, rebin=8):
     fig.suptitle(
         "To select square in second image, press space. Press enter to confirm."
     )
-    plt.show()
 
-    translation = centers["mov"] - centers["ref"]
-    crop_ref = full_images[0][
-        positions["ref"][2] : positions["ref"][3],
-        positions["ref"][0] : positions["ref"][1],
-    ]
-    crop_mov = full_images[1][
-        positions["mov"][2] : positions["mov"][3],
-        positions["mov"][0] : positions["mov"][1],
-    ]
-    return crop_ref, crop_mov, translation
+    def getter():
+        translation = centers["mov"] - centers["ref"]
+        crop_ref = full_images[0][
+            positions["ref"][2] : positions["ref"][3],
+            positions["ref"][0] : positions["ref"][1],
+        ]
+        crop_mov = full_images[1][
+            positions["mov"][2] : positions["mov"][3],
+            positions["mov"][0] : positions["mov"][1],
+        ]
+        return crop_ref, crop_mov, translation
+
+    if show_in:
+        plt.show()
+        return getter()
+    else:
+        return fig, getter
 
 
 def align_auto_crop(
-    ref_image, mov_image, align_type: str, inverse=True, sub_pixel_factor=2
+    ref_image, mov_image, align_type: str, inverse=True, sub_pixel_factor=2, show = True
 ):
     trans = ImageTransformer(mov_image)
-    crop_ref, crop_mov, translation = crop_images(ref_image, mov_image)
+    crop_ref, crop_mov, translation = crop_images(ref_image, mov_image, show_in = show)
     trans.translate(xshift=translation[0], yshift=translation[1])
     auto_align_matrix = align_auto(
         crop_ref,
@@ -234,24 +238,20 @@ def align_auto_crop(
     trans.add_transform(auto_align_matrix)
     return trans.get_combined_transform(), trans.get_transformed_image()
 
-
-if __name__ == "__main__":
-    # path1 = os.path.dirname(os.getcwd()) + "/data/Hb-.dm3"
-    # path2 = os.path.dirname(os.getcwd()) + "/data/Rb-.dm3"
-    # path3 = os.path.dirname(os.getcwd()) + "/data/Hb+.dm3"
-    # path4 = os.path.dirname(os.getcwd()) + "/data/Rb+.dm3"
-    # image_set1 = ImageSetHolo.load(path1, path2)
-    # image_set2 = ImageSetHolo.load(path3, path4)
-    # image_set1.phase_calculation()
-    # image_set2.phase_calculation()
-    # image1 = image_set1.unwrapped_phase.data
-    # image2 = image_set2.unwrapped_phase.data
-    path1 = os.path.dirname(os.getcwd()) + "/data/unwrapped_phase_1.png"
-    path2 = os.path.dirname(os.getcwd()) + "/data/unwrapped_phase_2.png"
-    image1 = imread(path1,0)
-    image2 = imread(path2,0)
-    x, image = align_auto_crop(image1, image2, "cross_corelation_hyperspy")
-    plt.figure("result")
-    plt.imshow(image1, cmap="gray")
-    plt.imshow(image, cmap="gray", alpha=0.4)
-    plt.show()
+def align_auto_crop_ntb(
+    ref_image, mov_image, align_type: str, inverse=True, sub_pixel_factor=2
+):
+    trans = ImageTransformer(mov_image)
+    fig, get_data = crop_images(ref_image, mov_image, show_in = False)
+    return get_data
+    # crop_ref, crop_mov, translation = getter()
+    # trans.translate(xshift=translation[0], yshift=translation[1])
+    # auto_align_matrix = align_auto(
+    #     crop_ref,
+    #     crop_mov,
+    #     align_type=align_type,
+    #     inverse=inverse,
+    #     sub_pixel_factor=sub_pixel_factor,
+    # )
+    # trans.add_transform(auto_align_matrix)
+    # return trans.get_combined_transform(), trans.get_transformed_image()

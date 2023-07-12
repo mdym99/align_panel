@@ -1,20 +1,15 @@
-# -*- coding: utf-8 -*-
-
 """
 Based on https://github.com/yuma-m/matplotlib-draggable-plot
 """
 
 import math
-
+import itertools
+import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backend_bases import MouseEvent
-import os
-from align_panel.data_structure import ImageSetHolo
 from skimage.transform import rescale
-from skimage.io import imread
-import itertools
 from align_panel.image_transformer import ImageTransformer
-import numpy as np
+
 
 class Point_definition_plots(object):
     u""" An example of plot with draggable markers """
@@ -230,32 +225,3 @@ def points_alignments(ref_image: np.array, mov_image: np.array, rebin: int, alig
     final_image = trans.get_transformed_image()
     matrix = trans.get_combined_transform()
     return final_image, matrix
-
-
-
-if __name__ == "__main__":
-    # path1 = os.path.dirname(os.getcwd()) + "/data/Hb-.dm3"
-    # path2 = os.path.dirname(os.getcwd()) + "/data/Rb-.dm3"
-    # path3 = os.path.dirname(os.getcwd()) + "/data/Hb+.dm3"
-    # path4 = os.path.dirname(os.getcwd()) + "/data/Rb+.dm3"
-    # image_set1 = ImageSetHolo.load(path1, path2)
-    # image_set2 = ImageSetHolo.load(path3, path4)
-    # image_set1.phase_calculation()
-    # image_set2.phase_calculation()
-    # image1 = image_set1.image.data
-    # image2 = image_set2.image.data
-    path1 = os.path.dirname(os.getcwd()) + "/data/unwrapped_phase_1.png"
-    path2 = os.path.dirname(os.getcwd()) + "/data/unwrapped_phase_2.png"
-    image1 = imread(path1,0)
-    image2 = imread(path2,0)
-    # result = Point_definition_plots(image1, image2)
-    # trans = ImageTransformer(image2)
-    # trans.estimate_transform(result._points, result._mov_points,method='euclidean')
-    # final_image = trans.get_transformed_image()
-
-    final_image, matrix = points_alignments(image1, image2, 16, 'euclidean')
-    plt.figure('result')
-    plt.imshow(image1, cmap='gray')
-    plt.imshow(final_image, cmap='gray',alpha=0.5)
-    plt.show()
-    print(matrix)
