@@ -12,32 +12,31 @@ setup(
             "hyperspy",
             "h5py",
             "scikit-image",
-            "panel",
             "pystackreg",
             "nexusformat",
-            "aperture @ https://github.com/znekula/align_panel/releases/download/0.0.1/aperture-0.0.1.tar.gz",
+            "matplotlib",
         ],
     package_dir={"": "src"},
     packages=find_packages(where='src'),
-    entry_points={
-        'console_scripts': [
-            'align_panel=align_panel.cli:main',
-        ]},
-    description="Package to align images in HDF5 format",
+    description="Package handling magnetic imaging data and tools for image alignments",
     long_description='''
-Package to align images in HDF5 format
+Package handling magnetic imaging data and tools for image alignments
 ''',
-    url="https://github.com/znekula/align_panel",
-    author="Zdeněk Nekula, Matthew Bryan",
+    url="https://github.com/mdym99/align_panel",
+    author="Michal Dymacek, Zdeněk Nekula, Matthew Bryan",
     keywords="electron holography, image alignment",
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3',
         'License :: OSI Approved :: MIT License (MIT)',
         'Operating System :: POSIX :: Linux',
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: Microsoft :: Windows',
-        'Environment :: Web Environment',
         'Environment :: Console',
     ],
 )
