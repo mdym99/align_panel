@@ -14,7 +14,7 @@ from align_panel.image_transformer import ImageTransformer
 class Point_definition_plots(object):
     u""" An example of plot with draggable markers """
 
-    def __init__(self, ref_image: np.array, mov_image: np.array , rebin: int):
+    def __init__(self, ref_image: np.array, mov_image: np.array , rebin: int, method = 'euclidean'):
         self._figure, self._axes, self._line, self._line2 = None, None, None, None
         self._dragging_point = None
         self._colors = itertools.cycle(['tab:blue','tab:orange','tab:green','tab:red','tab:purple','tab:brown','tab:pink','tab:gray','tab:olive','tab:cyan'])
@@ -24,6 +24,7 @@ class Point_definition_plots(object):
         self._rebin = rebin
         self._tmat = None
         self._result_image = None
+        self._method = method
         
 
         self._init_plot()
@@ -224,7 +225,7 @@ class Point_definition_plots(object):
         self._points = np.array(self._points).reshape(-1,2)
         self._mov_points = np.array(self._mov_points).reshape(-1,2)
         trans = ImageTransformer(self._image_dict['mov'])
-        trans.estimate_transform(self._points, self._mov_points, method='euclidean')
+        trans.estimate_transform(self._points, self._mov_points, method=self._method)
         self._result_image = trans.get_transformed_image()
         self._tmat = trans.get_combined_transform()
         plt.figure('result')

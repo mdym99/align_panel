@@ -76,80 +76,148 @@ class UnscalableRectangleSelector(CustomRectangleSelector): # need for this clas
         self.set_visible(self.visible)
         self.update()
 
+class CropOut(object):
 
-def select_callback(eclick, erelease):
-    """
-    Callback for line selection.
+    def __init__(self, ref_image,mov_image,rebin, align_method= None, inverse = None, sub_pixel = None):
 
-    *eclick* and *erelease* are the press and release events.
-    """
-    x1, y1 = eclick.xdata, eclick.ydata
-    x2, y2 = erelease.xdata, erelease.ydata
+        self._dict_images = {"ref": ref_image, "mov": mov_image}
+        self._positions = {"ref": None, "mov": None}
+        self.fig, self.ax = None,None
+        self._centers = {"ref": None, "mov": None}
+        self._translation = None
+        self._cropped_images = {"ref": None, "mov": None}
+        self._rebin = rebin
+        self._selectors = []
+
+        self._init_plot()
+    
+    def _select_callback(self, eclick, erelease):
+        """
+        Callback for line selection.
+
+        *eclick* and *erelease* are the press and release events.
+        """
+        x1, y1 = eclick.xdata, eclick.ydata
+        x2, y2 = erelease.xdata, erelease.ydata
+    
+    def _toggle_selector(self, event):
+        if event.key == "t":
+            for selector in self._selectors:
+                name = type(selector).__name__
+                if selector.active:
+                    print(f"{name} deactivated.")
+                    selector.set_active(False)
+                else:
+                    print(f"{name} activated.")
+                    selector.set_active(True)
+        if event.key == " ":
+            self._selectors[1].set_visible(True)
+            self._selectors[1].draw_shape(self._selectors[0].extents)
+            self._selectors[1]._center_handle.set_data(*self._selectors[0].center)
+            self._selectors[1]._edge_handles.set_data(*self._selectors[0].edge_centers)
+            self._selectors[1]._corner_handles.set_data(*self._selectors[0].corners)
+            self.fig.canvas.draw()
+        if event.key == "enter":
+            self._positions["ref"] = np.array([normal_round(x) for x in self._selectors[0].extents])
+            self._centers["ref"] = np.array([normal_round(x) for x in self._selectors[0].center])
+            self._positions["mov"] = np.array([normal_round(x) for x in self._selectors[1].extents])
+            self._centers["mov"] = np.array([normal_round(x) for x in self._selectors[1].center])
+            shape_ref = np.array(
+                [
+                    self._positions["ref"][1] - self._positions["ref"][0],
+                    self._positions["ref"][3] - self._positions["ref"][2],
+                ]
+            )
+            shape_mov = np.array(
+                [
+                    self._positions["mov"][1] - self._positions["mov"][0],
+                    self._positions["mov"][3] - self._positions["mov"][2],
+                ]
+            )
+            if np.any(shape_ref != shape_mov):
+                self._positions["mov"][0] = normal_round(self._centers["mov"][0] - shape_ref[0] / 2)
+                self._positions["mov"][1] = normal_round(self._centers["mov"][0] + shape_ref[0] / 2)
+                self._positions["mov"][2] = normal_round(self._centers["mov"][1] - shape_ref[1] / 2)
+                self._positions["mov"][3] = normal_round(self._centers["mov"][1] + shape_ref[1] / 2)
+            print("Images are prepared for alignment. Close the plot window to continue.")
+        
+    def _close_event(self,event):
+        self.translation = self._centers["mov"] - self._centers["ref"]
+        self._cropped_images['ref'] = self._dict_images['ref'][
+            self._positions["ref"][2] : self._positions["ref"][3],
+            self._positions["ref"][0] : self._positions["ref"][1],
+        ]
+        self._cropped_images['mov'] = self._dict_images['mov'][
+            self._positions["mov"][2] : self._positions["mov"][3],
+            self._positions["mov"][0] : self._positions["mov"][1],
+        ]
 
 
-def toggle_selector(selectors, fig, centers, positions, event):
-    if event.key == "t":
-        for selector in selectors:
-            name = type(selector).__name__
-            if selector.active:
-                print(f"{name} deactivated.")
-                selector.set_active(False)
-            else:
-                print(f"{name} activated.")
-                selector.set_active(True)
-    if event.key == " ":
-        selectors[1].set_visible(True)
-        selectors[1].draw_shape(selectors[0].extents)
-        selectors[1]._center_handle.set_data(*selectors[0].center)
-        selectors[1]._edge_handles.set_data(*selectors[0].edge_centers)
-        selectors[1]._corner_handles.set_data(*selectors[0].corners)
-        fig.canvas.draw()
-    if event.key == "enter":
-        positions["ref"] = np.array([normal_round(x) for x in selectors[0].extents])
-        centers["ref"] = np.array([normal_round(x) for x in selectors[0].center])
-        positions["mov"] = np.array([normal_round(x) for x in selectors[1].extents])
-        centers["mov"] = np.array([normal_round(x) for x in selectors[1].center])
-        shape_ref = np.array(
-            [
-                positions["ref"][1] - positions["ref"][0],
-                positions["ref"][3] - positions["ref"][2],
-            ]
+
+    def _init_plot(self):
+        original_shape = self._dict_images["ref"].shape
+        resized_images = list(
+        map(lambda image: rescale(image.copy(), 1/self._rebin, anti_aliasing=False), self._dict_images.values()))
+
+        self.fig = plt.figure(layout="constrained")
+        self.axs = self.fig.subplots(1, 2)
+        names = ["Reference image", "Moving image"]
+        for ax, selector_class, image, name in zip(
+            self.axs,
+            [CustomRectangleSelector, UnscalableRectangleSelector],
+            resized_images,
+            names,
+        ):
+            ax.imshow(
+                image, cmap="gray", extent=[0, original_shape[1], original_shape[0], 0]
+            )
+            # ax.xaxis.set_tick_params(labelbottom=False)
+            # ax.yaxis.set_tick_params(labelleft=False)
+            ax.set_title(f"{name}")
+            self._selectors.append(
+                selector_class(
+                    ax,
+                    self._select_callback,
+                    useblit=True,
+                    button=[1],  # disable middle button
+                    minspanx=5,
+                    minspany=5,
+                    spancoords="pixels",
+                    interactive=True,
+                    drag_from_anywhere=True,
+                )
+            )
+        self.fig.canvas.mpl_connect(
+            "key_press_event", self._toggle_selector)
+        self.fig.canvas.mpl_connect('close_event', self._close_event)
+        self.fig.canvas.draw()
+        self.fig.suptitle(
+            "To select square in second image, press space. Press enter to confirm."
         )
-        shape_mov = np.array(
-            [
-                positions["mov"][1] - positions["mov"][0],
-                positions["mov"][3] - positions["mov"][2],
-            ]
-        )
-        if np.any(shape_ref != shape_mov):
-            positions["mov"][0] = normal_round(centers["mov"][0] - shape_ref[0] / 2)
-            positions["mov"][1] = normal_round(centers["mov"][0] + shape_ref[0] / 2)
-            positions["mov"][2] = normal_round(centers["mov"][1] - shape_ref[1] / 2)
-            positions["mov"][3] = normal_round(centers["mov"][1] + shape_ref[1] / 2)
-        print("Images are prepared for alignment. Close the plot window to continue.")
+        plt.show()
 
 
-def align_auto(ref_image, mov_image, align_type: str, inverse=True, sub_pixel_factor=2):
+def align_auto(ref_image, mov_image, method: str, inverse=True, sub_pixel_factor=2):
     if inverse:
         mov_image = -mov_image
     trans = ImageTransformer(mov_image)
-    if align_type == "PyStackReg_translation":
+    if method == "PyStackReg_translation":
         sr = StackReg(StackReg.TRANSLATION)
         matrix = sr.register(ref_image, mov_image)
         trans.add_transform(matrix)
-    elif align_type == "PyStackReg_rigid":
+    elif method == "PyStackReg_rigid":
         sr = StackReg(StackReg.RIGID_BODY)
         matrix = sr.register(ref_image, mov_image)
         trans.add_transform(matrix)
-    elif align_type == "None":
+    elif method == "None":
         trans.add_null_transform()
-    elif align_type == "cross_corelation_hyperspy":
+    elif method == "cross_corelation_hyperspy":
         shifts = estimate_image_shift(
             ref_image, mov_image, sub_pixel_factor=sub_pixel_factor
         )
         shifts = np.flip(shifts[0])
         trans.translate(xshift=shifts[0], yshift=shifts[1])
-    elif align_type == "cross_corelation_skimage":
+    elif method == "cross_corelation_skimage":
         shifts, error, phasediff = phase_cross_correlation(
             ref_image, mov_image, upsample_factor=sub_pixel_factor
         )
@@ -157,101 +225,22 @@ def align_auto(ref_image, mov_image, align_type: str, inverse=True, sub_pixel_fa
     return trans.get_combined_transform()
 
 
-def crop_images(ref_image, mov_image, rebin=8, show_in = True):
-    full_images = [ref_image, mov_image]
-    original_shape = ref_image.shape
-    resized_images = list(
-        map(lambda image: rescale(image.copy(), 1/rebin, anti_aliasing=False), full_images)
-    )
-
-    fig = plt.figure(layout="constrained")
-    axs = fig.subplots(1, 2)
-    selectors = []
-    centers = {"ref": None, "mov": None}
-    positions = {"ref": None, "mov": None}
-    names = ["Reference image", "Moving image"]
-    for ax, selector_class, image, name in zip(
-        axs,
-        [CustomRectangleSelector, UnscalableRectangleSelector],
-        resized_images,
-        names,
-    ):
-        ax.imshow(
-            image, cmap="gray", extent=[0, original_shape[1], original_shape[0], 0]
-        )
-        # ax.xaxis.set_tick_params(labelbottom=False)
-        # ax.yaxis.set_tick_params(labelleft=False)
-        ax.set_title(f"{name}")
-        selectors.append(
-            selector_class(
-                ax,
-                select_callback,
-                useblit=True,
-                button=[1],  # disable middle button
-                minspanx=5,
-                minspany=5,
-                spancoords="pixels",
-                interactive=True,
-                drag_from_anywhere=True,
-            )
-        )
-    fig.canvas.mpl_connect(
-        "key_press_event", partial(toggle_selector, selectors, fig, centers, positions)
-    )
-    fig.canvas.draw()
-    fig.suptitle(
-        "To select square in second image, press space. Press enter to confirm."
-    )
-
-    def getter():
-        translation = centers["mov"] - centers["ref"]
-        crop_ref = full_images[0][
-            positions["ref"][2] : positions["ref"][3],
-            positions["ref"][0] : positions["ref"][1],
-        ]
-        crop_mov = full_images[1][
-            positions["mov"][2] : positions["mov"][3],
-            positions["mov"][0] : positions["mov"][1],
-        ]
-        return crop_ref, crop_mov, translation
-
-    if show_in:
-        plt.show()
-        return getter()
-    else:
-        return fig, getter
-
-
-def align_auto_crop(
-    ref_image, mov_image, align_type: str, inverse=True, sub_pixel_factor=2, show = True
-):
-    trans = ImageTransformer(mov_image)
-    crop_ref, crop_mov, translation = crop_images(ref_image, mov_image, show_in = show)
-    trans.translate(xshift=translation[0], yshift=translation[1])
-    auto_align_matrix = align_auto(
-        crop_ref,
-        crop_mov,
-        align_type=align_type,
-        inverse=inverse,
-        sub_pixel_factor=sub_pixel_factor,
-    )
-    trans.add_transform(auto_align_matrix)
-    return trans.get_combined_transform(), trans.get_transformed_image()
-
-def align_auto_crop_ntb(
-    ref_image, mov_image, align_type: str, inverse=True, sub_pixel_factor=2
-):
-    trans = ImageTransformer(mov_image)
-    fig, get_data = crop_images(ref_image, mov_image, show_in = False)
-    return get_data
-    # crop_ref, crop_mov, translation = getter()
-    # trans.translate(xshift=translation[0], yshift=translation[1])
-    # auto_align_matrix = align_auto(
-    #     crop_ref,
-    #     crop_mov,
-    #     align_type=align_type,
-    #     inverse=inverse,
-    #     sub_pixel_factor=sub_pixel_factor,
-    # )
-    # trans.add_transform(auto_align_matrix)
-    # return trans.get_combined_transform(), trans.get_transformed_image()
+class CropAlign(CropOut):
+    
+    def __init__(self, ref_image, mov_image, rebin=1, method="None", inverse=True, sub_pixel_factor=2):
+        self._trans = None
+        self._tmat = None
+        self._result_image = None
+        self._align_params = {"method": method, "inverse": inverse, "sub_pixel_factor": sub_pixel_factor}
+        super().__init__(ref_image, mov_image, rebin=rebin)
+        
+        
+    
+    def _close_event(self, event):
+        super()._close_event(event)
+        matrix = align_auto(self._cropped_images['ref'], self._cropped_images['mov'], **self._align_params)
+        self._trans = ImageTransformer(self._dict_images['mov'])
+        self._trans.translate(self.translation[0], self.translation[1])
+        self._trans.add_transform(matrix)
+        self._tmat = self._trans.get_combined_transform()
+        self._result_image = self._trans.get_transformed_image()

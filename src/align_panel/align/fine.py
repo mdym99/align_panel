@@ -15,7 +15,7 @@ from align_panel.image_transformer import ImageTransformer
 
 class FineAlignments(object):
 
-    def __init__(self, ref_image: np.array, mov_image: np.array, rebin: int):
+    def __init__(self, ref_image: np.array, mov_image: np.array, rebin: int, show_result = True):
             self._dict_images = {'ref': ref_image, 'mov': mov_image}
             self._steps = {'translate': 5, 'rotate': 2.5, 'scale': 0.75}
             self._rebin = rebin
@@ -24,6 +24,7 @@ class FineAlignments(object):
             self._trans = None
             self._tmat = None
             self._result_image = None
+            self._show_result = show_result
 
             self._init_plot()  
 
@@ -69,6 +70,11 @@ class FineAlignments(object):
         self._trans = ImageTransformer(self._dict_images['mov'])
         self._trans.add_transform(self._tmat)
         self._result_image = self._trans.get_transformed_image()
+        if self._show_result:
+            plt.figure('result')
+            plt.imshow(self._dict_images['ref'], cmap='gray')
+            plt.imshow(self._result_image, cmap='gray', alpha=0.5)
+            plt.show()
 
     def _init_plot(self):
         ref_image = rescale(self._dict_images['ref'].copy(), 1/self._rebin, anti_aliasing=False)
