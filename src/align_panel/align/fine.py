@@ -3,112 +3,100 @@ Run in prototypes folder !!!
 """
 
 import sys
-from functools import partial
-import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.widgets import Slider, Button
-import os
-from align_panel.data_structure import ImageSetHolo
+import numpy as np
+from matplotlib.widgets import Slider
 from skimage.transform import rescale
-from skimage.io import imread
 import matplotlib as mpl
 mpl.rcParams['path.simplify'] = True
 mpl.rcParams['path.simplify_threshold'] = 1.0
 from align_panel.image_transformer import ImageTransformer
 
 
-def on_press(fig, trans, image1, event):
+class FineAlignments(object):
 
-    sys.stdout.flush()
-    if event.key == 'up':
-        trans.translate(xshift=0., yshift=+step_size)
-    elif event.key == 'down':
-        trans.translate(xshift=0., yshift=-step_size)
-    elif event.key == 'left':
-        trans.translate(xshift=0. + step_size, yshift=0.)
-    elif event.key == 'right':
-        trans.translate(xshift=0. - step_size, yshift=0.)
-    elif event.key == 'r':
-        trans.rotate_about_center(rotation_degrees=-rot_size)
-    elif event.key == 'e':
-        trans.rotate_about_center(rotation_degrees=rot_size)
-    elif event.key == '-':
-        trans.uniform_scale_centered(scale_factor=1/scale_size)
-    elif event.key == '+':
-        trans.uniform_scale_centered(scale_factor=scale_size)
-    elif event.key == 'enter':
-        print(trans.get_combined_transform())
-    elif event.key == 'escape':
-        trans.clear_transforms()
-        #trans.add_null_transform()
+    def __init__(self, ref_image: np.array, mov_image: np.array, rebin: int):
+            self._dict_images = {'ref': ref_image, 'mov': mov_image}
+            self._steps = {'translate': 5, 'rotate': 2.5, 'scale': 0.75}
+            self._rebin = rebin
+            self._figure, self._axes = None, None
+            self._image1 = None
+            self._trans = None
+            self._tmat = None
+            self._result_image = None
 
-    trans_image = trans.get_transformed_image()
-    image1.set_data(trans_image)
-    fig.canvas.draw()
+            self._init_plot()  
 
-def update_trans(val):
-    global step_size
-    step_size = val
-
-def update_rot(val):
-    global rot_size
-    rot_size = val 
-
-def update_scale(val):
-    global scale_size
-    scale_size = val
-
-def align_keyboard_input(ref_image: np.array, mov_image: np.array, rebin: int = 8):
-    ref_image = rescale(ref_image.copy(), 1/rebin, anti_aliasing=False)
-    mov_image = rescale(mov_image.copy(), 1/rebin, anti_aliasing=False)
-    fig, ax = plt.subplots()
-    trans = ImageTransformer(mov_image)
-    image1 = plt.imshow(mov_image, cmap = 'gray', interpolation='none')
-    fig.canvas.mpl_connect('key_press_event', partial(on_press, fig, trans, image1))
-    image2 = plt.imshow(ref_image, cmap = 'gray', alpha = 0.4,interpolation='none')
-
-    fig.subplots_adjust(bottom=0.3, left = 0.2)
-    slideraxis = fig.add_axes([0.16, 0.17, 0.75, 0.03])
-    slider = Slider(slideraxis, label='Translation',
-                    valmin=0, valmax=10, valinit=5, )
-    slider.on_changed(update_trans)
-
-    slideraxis_rot = fig.add_axes([0.16, 0.25, 0.03, 0.6])
-    slider_rot = Slider(slideraxis_rot, label='Rotation',
-                    valmin=0, valmax=5, valinit=2.5,orientation='vertical')
-    slider_rot.on_changed(update_rot)
-
+    def _on_press(self, event):
+        sys.stdout.flush()
+        if event.key == 'up':
+            self._trans.translate(xshift=0., yshift=+self._steps['translate'])
+        elif event.key == 'down':
+            self._trans.translate(xshift=0., yshift=-self._steps['translate'])
+        elif event.key == 'left':
+            self._trans.translate(xshift=0. + self._steps['translate'], yshift=0.)
+        elif event.key == 'right':
+            self._trans.translate(xshift=0. - self._steps['translate'], yshift=0.)
+        elif event.key == 'r':
+            self._trans.rotate_about_center(rotation_degrees=-self._steps['rotate'])
+        elif event.key == 'e':
+            self._trans.rotate_about_center(rotation_degrees=self._steps['rotate'])
+        elif event.key == '-':
+            self._trans.uniform_scale_centered(scale_factor=1/self._steps['scale'])
+        elif event.key == '+':
+            self._trans.uniform_scale_centered(scale_factor=self._steps['scale'])
+        elif event.key == 'enter':
+            print(self._trans.get_combined_transform())
+        elif event.key == 'escape':
+            self._trans.clear_transforms()
+        
+        self._image1.set_data(self._trans.get_transformed_image())
+        self._figure.canvas.draw()
     
-    slideraxis_scale = fig.add_axes([0.16, 0.07, 0.75, 0.03])
-    slider_scale = Slider(slideraxis_scale, label='Scaling',
-                    valmin=0.5, valmax=1, valinit=0.75)
-    slider_scale.on_changed(update_scale)
+    def _update_trans(self, val):
+        self._steps['translate'] = val
+    
+    def _update_rot(self, val):
+        self._steps['rotate'] = val
+    
+    def _update_scale(self, val):
+        self._steps['scale'] = val
+
+    def _on_close(self, event):
+        self._tmat = self._trans.get_combined_transform()
+        self._tmat.params[0, 2] *= self._rebin
+        self._tmat.params[1, 2] *= self._rebin
+        self._trans = ImageTransformer(self._dict_images['mov'])
+        self._trans.add_transform(self._tmat)
+        self._result_image = self._trans.get_transformed_image()
+
+    def _init_plot(self):
+        ref_image = rescale(self._dict_images['ref'].copy(), 1/self._rebin, anti_aliasing=False)
+        mov_image = rescale(self._dict_images['mov'].copy(), 1/self._rebin, anti_aliasing=False)
+        self._figure, self._axes = plt.subplots()
+        self._trans = ImageTransformer(mov_image)
+        self._image1 = plt.imshow(mov_image, cmap = 'gray', interpolation='none')
+        self._figure.canvas.mpl_connect('key_press_event', self._on_press)
+        plt.imshow(ref_image, cmap = 'gray', alpha = 0.4,interpolation='none')
+        self._figure.canvas.mpl_connect('close_event', self._on_close)
+
+        self._figure.subplots_adjust(bottom=0.3, left = 0.2)
+        slideraxis = self._figure.add_axes([0.16, 0.17, 0.75, 0.03])
+        slider = Slider(slideraxis, label='Translation',
+                        valmin=0, valmax=10, valinit=5, )
+        slider.on_changed(self._update_trans)
+
+        slideraxis_rot = self._figure.add_axes([0.16, 0.25, 0.03, 0.6])
+        slider_rot = Slider(slideraxis_rot, label='Rotation',
+                        valmin=0, valmax=5, valinit=2.5,orientation='vertical')
+        slider_rot.on_changed(self._update_rot)
+
+        
+        slideraxis_scale = self._figure.add_axes([0.16, 0.07, 0.75, 0.03])
+        slider_scale = Slider(slideraxis_scale, label='Scaling',
+                        valmin=0.5, valmax=1, valinit=0.75)
+        slider_scale.on_changed(self._update_scale)
 
 
-    plt.show()
-    matrix = trans.get_combined_transform() # maybe add scale translation into ImageTransformer module
-    matrix.params[0,2]= matrix.params[0,2]*rebin
-    matrix.params[1,2]= matrix.params[1,2]*rebin
-    return matrix
-
-
-if __name__ == '__main__':
-    # path1 = os.path.dirname(os.getcwd())+'/data/Hb-.dm3'
-    # path2 = os.path.dirname(os.getcwd())+'/data/Rb-.dm3'
-    # path3 = os.path.dirname(os.getcwd())+'/data/Hb+.dm3'
-    # path4 = os.path.dirname(os.getcwd())+'/data/Rb+.dm3'
-    # image_set1 = ImageSetHolo.load(path1, path2)
-    # image_set2 = ImageSetHolo.load(path3, path4)
-    # image_set1.phase_calculation()
-    # image_set2.phase_calculation()
-    # im1 = image_set1.unwrapped_phase.data
-    # im2 = image_set2.unwrapped_phase.data
-    path1 = os.path.dirname(os.getcwd()) + "/data/unwrapped_phase_1.png"
-    path2 = os.path.dirname(os.getcwd()) + "/data/unwrapped_phase_2.png"
-    image1 = imread(path1,0)
-    image2 = imread(path2,0)
-    step_size = 5
-    rot_size = 2.5
-    scale_size = 0.75
-    x = align_keyboard_input(image1, image2)
-    print(x.params)
+        plt.show()  
+        
