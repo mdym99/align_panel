@@ -3,10 +3,9 @@
 Code from aperture library
 """
 from __future__ import annotations
-from .hints import Literal
 
 
-def python_info() -> Literal['unknown', 'python', 'ipython', 'notebook']:
+def python_info():
     """
     Try to infer information about the current Python interpreter environment
 
@@ -22,12 +21,9 @@ def python_info() -> Literal['unknown', 'python', 'ipython', 'notebook']:
             return 'unknown'  # Other type (?)
     except NameError:
         return 'python'
-
-
 def is_notebook() -> bool:
     """Convenience method to check if we are in a notebook"""
     return python_info() == 'notebook'
-
 
 def notebook_fullwidth():
     from IPython.display import display, HTML
