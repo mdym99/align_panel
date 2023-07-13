@@ -22,6 +22,8 @@ class Point_definition_plots(object):
         self._mov_points = []
         self._image_dict = {'ref': ref_image, 'mov': mov_image}
         self._rebin = rebin
+        self._tmat = None
+        self._result_image = None
         
 
         self._init_plot()
@@ -37,7 +39,7 @@ class Point_definition_plots(object):
             #ax.xaxis.set_tick_params(labelbottom=False)
             #ax.yaxis.set_tick_params(labelleft=False)
             ax.set_title(name)
-        #self._figure.canvas.blit(self._figure.bbox)
+        self._figure.canvas.blit(self._figure.bbox)
         
 
         self._figure.canvas.mpl_connect('button_press_event', self._on_click)
@@ -46,10 +48,11 @@ class Point_definition_plots(object):
         self._figure.canvas.mpl_connect('button_release_event', self._on_release_2)
         self._figure.canvas.mpl_connect('motion_notify_event', self._on_motion)
         self._figure.canvas.mpl_connect('motion_notify_event', self._on_motion_2)
+        self._figure.canvas.mpl_connect('close_event', self._on_close)
 
         plt.show()
-        self._points = np.array(self._points).reshape(-1,2)
-        self._mov_points = np.array(self._mov_points).reshape(-1,2)
+        #self._points = np.array(self._points).reshape(-1,2)
+        #self._mov_points = np.array(self._mov_points).reshape(-1,2)
 
     def _update_plot(self):
         if not self._points:
@@ -216,6 +219,19 @@ class Point_definition_plots(object):
                     self._dragging_point  = (int(event.xdata), int(event.ydata))
                     break
             self._update_plot2()
+    
+    def _on_close(self, event):
+        self._points = np.array(self._points).reshape(-1,2)
+        self._mov_points = np.array(self._mov_points).reshape(-1,2)
+        trans = ImageTransformer(self._image_dict['mov'])
+        trans.estimate_transform(self._points, self._mov_points, method='euclidean')
+        self._result_image = trans.get_transformed_image()
+        self._tmat = trans.get_combined_transform()
+        plt.figure('result')
+        plt.imshow(self._image_dict['ref'], cmap='gray')
+        plt.imshow(self._result_image, cmap='gray', alpha=0.5)
+        plt.show()
+        
 
 
 def points_alignments(ref_image: np.array, mov_image: np.array, rebin: int, align_method: str):
