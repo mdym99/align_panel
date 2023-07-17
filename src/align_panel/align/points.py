@@ -1,4 +1,4 @@
-""" Module containing the class for the point definition alignment. 
+""" Module containing the class for the point definition alignment.
 
 Based on https://github.com/yuma-m/matplotlib-draggable-plot
 """
@@ -15,6 +15,8 @@ from align_panel.image_transformer import ImageTransformer
 
 class PointAlignments:
     """Class for the point definition alignment.
+    The inputs are ``two images``, of ``numpy array`` type, and the rebinning factor.
+    The rebinning factor is used to speed up the alignment process.
     When the class is initialized, two images are shown in two different axes.
     The user can select points in both images by left clicking. The points can be deleted
     by right clicking or dragged by left clicking. The points are later used for alignments
