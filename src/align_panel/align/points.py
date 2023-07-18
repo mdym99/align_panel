@@ -129,7 +129,7 @@ class PointAlignments:
                 image, cmap="gray", extent=[0, original_shape[1], original_shape[0], 0]
             )
             axis.set_title(name)
-        self._figure.canvas.blit(self._figure.bbox)  # maybe increase performance
+        #self._figure.canvas.blit(self._figure.bbox)  # maybe increase performance
         self._figure.canvas.mpl_connect("button_press_event", self._on_click)
         self._figure.canvas.mpl_connect("button_press_event", self._on_click_2)
         self._figure.canvas.mpl_connect("button_release_event", self._on_release)
