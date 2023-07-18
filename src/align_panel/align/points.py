@@ -26,6 +26,33 @@ class PointAlignments:
            ``['affine', 'euclidean', 'similarity', 'projective']``
     By default, the euclidean alignment is used.
 
+    Attributes
+    ----------
+    _image_dict : dict
+        Dictionary containing the reference and moving images.
+    _trans : ImageTransformer
+        ImageTransformer object. Used for image transformation, contains the moving image,
+        transformation matrices and functions for image transformation.
+    _params : dict
+        Dictionary containing the rebinning factor, the alignment method and the show_result
+        parameter.
+    _figure : matplotlib.figure.Figure
+        Figure object.
+    _axes : matplotlib.axes.Axes
+        Axes object.
+    _line : matplotlib.lines.Line2D
+        Line object. Used for 1. axis.
+    _line2 : matplotlib.lines.Line2D
+        Line object. Used for 2. axis.
+    _dragging_point : int
+        Coordinates of the point that is being dragged.
+    _points : list
+        List of points in the reference image.
+    _mov_points : list
+        List of points in the moving image.
+    _results : dict
+        Dictionary containing the transformation matrix and the transformed image.
+
     """
 
     def __init__(
@@ -36,7 +63,24 @@ class PointAlignments:
         method: str = "euclidean",
         show_result: bool = True,
     ):
+        """
+        Parameters
+        ----------
+        ref_image : np.array
+            Reference image.
+        mov_image : np.array
+            Moving image.
+        rebin : int
+            Rebinning factor.
+        method : str, optional
+            Alignment method. The default is ``euclidean``.
+            All options are ``['affine', 'euclidean', 'similarity', 'projective']``.
+        show_result : bool, optional
+            If True, the result of the alignment is shown. The default is True.
+
+        """
         self._image_dict = {"ref": ref_image, "mov": mov_image}
+        self._trans = ImageTransformer(self._image_dict["mov"])
         self._params = {"rebin": rebin, "method": method, "show_result": show_result}
         self._figure, self._axes, self._line, self._line2 = None, None, None, None
         self._dragging_point = None
@@ -317,10 +361,9 @@ class PointAlignments:
         del event
         self._points = np.array(self._points).reshape(-1, 2)
         self._mov_points = np.array(self._mov_points).reshape(-1, 2)
-        trans = ImageTransformer(self._image_dict["mov"])
-        trans.estimate_transform(self._points, self._mov_points, method=self._method)
-        self._results["result_image"] = trans.get_transformed_image()
-        self._results["tmat"] = trans.get_combined_transform()
+        self._trans.estimate_transform(self._points, self._mov_points, method=self._method)
+        self._results["result_image"] = self._trans.get_transformed_image()
+        self._results["tmat"] = self._trans.get_combined_transform()
         if self._show_result:
             plt.figure("Result of alignment")
             plt.imshow(self._image_dict["ref"], cmap="gray")

@@ -16,16 +16,48 @@ mpl.rcParams["path.simplify_threshold"] = 1.0
 
 
 class FineAlignments:
-    """Class for fine alignment of ``two images``. The inputs are two images, of ``numpy array`` type,
-    and the rebinning factor. The rebinning factor is used to speed up the alignment process.
-    The fine alignments are achieved by using the ImageTransformer class. User can use the 
-    keyboard to translate, rotate and scale the image.
+    """Class for fine alignment of ``two images``. The inputs are two images, of ``numpy array`` 
+    type, and the rebinning factor. The rebinning factor is used to speed up the alignment 
+    process. the fine alignments are achieved by using the ImageTransformer class. User can 
+    use the keyboard to translate, rotate and scale the image.
     For translation, the ``arrow keys`` are used. For rotation, the `r`` (right) and ``e`` (left)
     keys are used. To scale the image, the ``+`` and ``-`` keys are used. The ``enter`` key prints
     the current transformation matrix. The ``escape`` key clears the transformation matrix.
     Steps can be changed with sliders, which are displayed below the image.
     Results are transformation matrix and the transformed image.
 
+    Atributes
+    ----------
+    _image_dict : dict
+        Dictionary containing the reference and moving images.
+    _params : dict
+        Dictionary containing the rebinning factor and the show_result parameter.
+    _steps : dict
+        Dictionary containing the steps for translation, rotation and scaling.
+    _figure : matplotlib.figure.Figure
+        Figure object.
+    _axes : matplotlib.axes.Axes
+        Axes object.
+    _image1 : matplotlib.image.AxesImage
+        Image object.
+    _trans : ImageTransformer
+        ImageTransformer object. Used for image transformation, contains the moving image, 
+        transformation matrices and functions for image transformation.
+    _results : dict
+        Dictionary containing the transformation matrix and the transformed image.
+
+    Methods
+    -------
+    _init_plot()
+        Initializes the plot. The reference image is displayed in the background. The moving
+        image is displayed in the foreground. The moving image is transformed with the
+        ImageTransformer class. The user can use the keyboard to translate, rotate and scale the
+        image.
+    _on_press(event)
+        Callback function for key press events.
+    _on_close(event)
+        Callback function for close event. After the window is closed, the transformation matrix
+        and the transformed image are saved in the _results dictionary.
 
     """
 
@@ -36,12 +68,25 @@ class FineAlignments:
         rebin: int,
         show_result: bool = True,
     ):
+        """
+        Parameters
+        ----------
+        ref_image : np.array
+            Reference image.
+        mov_image : np.array
+            Moving image.
+        rebin : int
+            Rebinning factor.
+        show_result : bool, optional
+            If True, the result is displayed in a new window. The default is True.
+
+        """
         self._image_dict = {"ref": ref_image, "mov": mov_image}
         self._params = {"rebin": rebin, "show_result": show_result}
         self._steps = {"translate": 5, "rotate": 2.5, "scale": 0.75}
         self._figure, self._axes = None, None
         self._image1 = None
-        self._trans = None
+        self._trans = ImageTransformer(self._image_dict['mov'])
         self._results = {"tmat": None, "result_image": None}
 
         self._init_plot()
@@ -76,7 +121,6 @@ class FineAlignments:
             self._image_dict["mov"].copy(), 1 / self._rebin, anti_aliasing=False
         )
         self._figure, self._axes = plt.subplots()
-        self._trans = ImageTransformer(mov_image)
         self._image1 = plt.imshow(mov_image, cmap="gray", interpolation="none")
         self._figure.canvas.mpl_connect("key_press_event", self._on_press)
         plt.imshow(ref_image, cmap="gray", alpha=0.4, interpolation="none")

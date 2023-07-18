@@ -449,7 +449,7 @@ class ImageSetHolo(ImageSet):
     This class contains the methods for saving, loading and processing of the holography 
     imagesets. Phase calculation is implemented with the help of hyperspy library.
 
-    Parameters
+    Attributes
     ----------
     images : dict
         Dictionary containing the images of the imageset. The keys are the names of the images. 
@@ -872,7 +872,7 @@ class ImageSetXMCD(ImageSet):
     This class contains the methods for saving, loading and processing of the XMCD 
     imagesets.
 
-    Parameters
+    Atributes
     ----------
     images : dict
         Dictionary containing the images of the imageset. The keys are the names of the images. 
