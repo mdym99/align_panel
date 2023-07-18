@@ -86,7 +86,7 @@ class FineAlignments:
         self._steps = {"translate": 5, "rotate": 2.5, "scale": 0.75}
         self._figure, self._axes = None, None
         self._image1 = None
-        self._trans = ImageTransformer(self._image_dict['mov'])
+        self._trans = None
         self._results = {"tmat": None, "result_image": None}
 
         self._init_plot()
@@ -121,6 +121,7 @@ class FineAlignments:
             self._image_dict["mov"].copy(), 1 / self._rebin, anti_aliasing=False
         )
         self._figure, self._axes = plt.subplots()
+        self._trans = ImageTransformer(mov_image)
         self._image1 = plt.imshow(mov_image, cmap="gray", interpolation="none")
         self._figure.canvas.mpl_connect("key_press_event", self._on_press)
         plt.imshow(ref_image, cmap="gray", alpha=0.4, interpolation="none")
