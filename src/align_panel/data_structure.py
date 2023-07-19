@@ -23,6 +23,9 @@ class ImageSet(ABC):
     type_measurement : str
         The type of the measurement. It is used as an attribute of the NXdata group
         in the NeXus file.
+    tmat : AffineTransform
+        Transformation matrix. It is used for the alignment of the imagesets.
+        By default None.
 
     Methods
     -------
@@ -80,6 +83,7 @@ class ImageSet(ABC):
         """
         self.images = {"image": image}  # named tuple could be better?
         self.type_measurement = type_measurement
+        self.tmat = None
 
     @property
     def image(self):
@@ -208,6 +212,8 @@ class ImageSet(ABC):
         file[
             f"raw_data/imageset_{id_number}/metadata/{key}_original_metadata"
         ] = NXfield(json.dumps(image.original_metadata.as_dictionary()))
+        if isinstance(self.tmat,np.ndarray) and key == "image":
+            file[f"raw_data/imageset_{id_number}/alignments/tmat"] = NXfield(self.tmat)
 
     def __file_prep(self, file):
         """Method that prepares the NeXus file for saving the imageset. It is used by the ``save``
@@ -244,6 +250,8 @@ class ImageSet(ABC):
         ] = self.type_measurement
         file[f"raw_data/imageset_{id_number}/raw_images"] = NXdata()
         file[f"raw_data/imageset_{id_number}/metadata"] = NXdata()
+        if isinstance(self.tmat,np.ndarray):
+            file[f"raw_data/imageset_{id_number}/alignments"] = NXdata()
         return id_number
 
     @abstractmethod
@@ -307,7 +315,10 @@ class ImageSet(ABC):
             full_image.metadata["General"]["title"] = full_image.metadata["General"][
                 "original_filename"
             ].split(".")[0]
-        return full_image
+        if "alignments" in file[f"raw_data/imageset_{id_number}"].tree:
+            tmat = file[f"raw_data/imageset_{id_number}/alignments/tmat"].nxdata
+            return full_image, tmat
+        return full_image, None
 
     @abstractclassmethod
     def load_from_nxs(cls, path: str, id_number: int = 0):
@@ -327,10 +338,12 @@ class ImageSet(ABC):
 
         """
         with nxopen(path, "r") as opened_file:
-            image = cls.__load_image_from_nxs(
+            image, tmat = cls.__load_image_from_nxs(
                 file=opened_file, key="image", id_number=id_number
             )
-            return cls(image)
+            image_set = cls(image)
+            image_set.tmat = tmat
+            return image_set
 
     @staticmethod
     def delete_imageset_from_file(path: str, id_number: int = 0):
@@ -714,7 +727,10 @@ class ImageSetHolo(ImageSet):
             full_image.metadata["General"]["title"] = full_image.metadata["General"][
                 "original_filename"
             ].split(".")[0]
-        return full_image
+        if "alignments" in file[f"raw_data/imageset_{id_number}"].tree and key == "image":
+            tmat = file[f"raw_data/imageset_{id_number}/alignments/tmat"].nxdata
+            return full_image, tmat
+        return full_image, None
 
     @classmethod
     def load_from_nxs(cls, path: str, id_number: int = 0):
@@ -737,15 +753,20 @@ class ImageSetHolo(ImageSet):
 
         """
         with nxopen(path, "r") as opened_file:
-            full_image = cls.__load_image_from_nxs(
+            full_image,tmat = cls.__load_image_from_nxs(
                 file=opened_file, key="image", id_number=id_number
             )
             if "ref_image" in opened_file[f"raw_data/imageset_{id_number}/raw_images"]:
-                full_ref_image = cls.__load_image_from_nxs(
+                full_ref_image, unused_none = cls.__load_image_from_nxs(
                     file=opened_file, key="ref_image", id_number=id_number
                 )
-                return cls(full_image, full_ref_image)
-            return cls(full_image)
+                del unused_none
+                image_set = cls(full_image, full_ref_image)
+                image_set.tmat = tmat
+                return image_set
+            image_set = cls(full_image)
+            image_set.tmat = tmat
+            return image_set
 
     def phase_calculation(
         self,
