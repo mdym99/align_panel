@@ -823,9 +823,9 @@ class ImageSetHolo(ImageSet):
             )
         else:
             if "Holography" in self.image.metadata.Signal.keys():
-                sb_position = self.image.metadata["Signal"]["Holography"][
+                sb_position = tuple(np.array(self.image.metadata["Signal"]["Holography"][
                     "Reconstruction_parameters"
-                ]["sb_position"]
+                ]["sb_position"]).astype(int))
                 sb_size = (
                     self.image.metadata["Signal"]["Holography"][
                         "Reconstruction_parameters"
@@ -841,43 +841,44 @@ class ImageSetHolo(ImageSet):
             parallel=True,
             show_progressbar=False,
         )
-        self.image.metadata["Signal"]["Holography"] = self.wave_image.metadata[
-            "Signal"
-        ]["Holography"]
-        self.image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
-            "sb_position"
-        ] = list(
-            self.wave_image.metadata["Signal"]["Holography"][
-                "Reconstruction_parameters"
-            ]["sb_position"].data.astype("float64")
-        )
-        self.image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
-            "sb_size"
-        ] = float(
-            self.wave_image.metadata["Signal"]["Holography"][
-                "Reconstruction_parameters"
-            ]["sb_size"].data
-        )
-        self.image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
-            "sb_smoothness"
-        ] = float(
-            self.wave_image.metadata["Signal"]["Holography"][
-                "Reconstruction_parameters"
-            ]["sb_smoothness"].data
-        )
-        if (
-            self.wave_image.metadata["Signal"]["Holography"][
-                "Reconstruction_parameters"
-            ]["sb_units"]
-            is not None
-        ):
+        if use_existing_params is False:
+            self.image.metadata["Signal"]["Holography"] = self.wave_image.metadata[
+                "Signal"
+            ]["Holography"]
             self.image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
-                "sb_units"
-            ] = str(
+                "sb_position"
+            ] = list(
                 self.wave_image.metadata["Signal"]["Holography"][
                     "Reconstruction_parameters"
-                ]["sb_units"].data
+                ]["sb_position"].data.astype("float64")
             )
+            self.image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
+                "sb_size"
+            ] = float(
+                self.wave_image.metadata["Signal"]["Holography"][
+                    "Reconstruction_parameters"
+                ]["sb_size"].data
+            )
+            self.image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
+                "sb_smoothness"
+            ] = float(
+                self.wave_image.metadata["Signal"]["Holography"][
+                    "Reconstruction_parameters"
+                ]["sb_smoothness"].data
+            )
+            if (
+                self.wave_image.metadata["Signal"]["Holography"][
+                    "Reconstruction_parameters"
+                ]["sb_units"]
+                is not None
+            ):
+                self.image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
+                    "sb_units"
+                ] = str(
+                    self.wave_image.metadata["Signal"]["Holography"][
+                        "Reconstruction_parameters"
+                    ]["sb_units"].data
+                )
 
         self.images["unwrapped_phase"] = self.wave_image.unwrapped_phase()
 
