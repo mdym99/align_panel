@@ -16,7 +16,7 @@ mpl.rcParams["path.simplify_threshold"] = 1.0
 
 
 class FineAlignments:
-    """Class for fine alignment of ``two images``. The inputs are two images, of ``numpy array`` 
+    """Class for fine alignment of ``two images``. The inputs are two images, of ``numpy ndarray`` 
     type, and the rebinning factor. The rebinning factor is used to speed up the alignment 
     process. the fine alignments are achieved by using the ImageTransformer class. User can 
     use the keyboard to translate, rotate and scale the image.

@@ -15,7 +15,7 @@ from align_panel.image_transformer import ImageTransformer
 
 class PointAlignments:
     """Class for the point definition alignment.
-    The inputs are ``two images``, of ``numpy array`` type, and the rebinning factor.
+    The inputs are ``two images``, of ``numpy ndarray`` type, and the rebinning factor.
     The rebinning factor is used to speed up the alignment process.
     When the class is initialized, two images are shown in two different axes.
     The user can select points in both images by left clicking. The points can be deleted
@@ -350,7 +350,7 @@ class PointAlignments:
 
     def _on_close(self, event):
         """Callback method for closing the figure.
-        Points are transformed to numpy array and saved to ``self._points`` and
+        Points are transformed to numpy ndarray and saved to ``self._points`` and
         ``self._mov_points``. Alignments from ``ImageTransformer`` are saved to self._tmat.
         If ``show_result`` is True, the result image is shown.
         Possible alignent techniques are:

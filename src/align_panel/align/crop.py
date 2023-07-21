@@ -136,10 +136,10 @@ class UnscalableRectangleSelector(FixedSizeSelector):  # need for this class?
         self.update()
 
 
-class CropAlign:
+class CropAlignments:
     """Class for cropping and aligning images. The class is based on the
     ``matplotlib`` library and uses the ``RectangleSelector`` widget. Input images
-    are ``numpy array`` type. Resuls are aligned image and transformation matrix for
+    are ``numpy ndarray`` type. Resuls are aligned image and transformation matrix for
     the alignments, or cropped images when only cropping is performed.
 
     Attributes
