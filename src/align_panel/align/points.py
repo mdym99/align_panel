@@ -57,8 +57,8 @@ class PointAlignments:
 
     def __init__(
         self,
-        ref_image: np.array,
-        mov_image: np.array,
+        ref_image: np.ndarray,
+        mov_image: np.ndarray,
         rebin: int,
         method: str = "euclidean",
         show_result: bool = True,
@@ -66,9 +66,9 @@ class PointAlignments:
         """
         Parameters
         ----------
-        ref_image : np.array
+        ref_image : np.ndarray
             Reference image.
-        mov_image : np.array
+        mov_image : np.ndarray
             Moving image.
         rebin : int
             Rebinning factor.
@@ -177,7 +177,7 @@ class PointAlignments:
                 self._line2.set_data(x, y)
         plt.draw()
 
-    def _add_point(self, points, x, y=None):
+    def _add_point(self, points: dict, x, y=None):
         if isinstance(x, MouseEvent):
             x, y = int(x.xdata), int(x.ydata)
         points.append((x, y))
@@ -199,7 +199,7 @@ class PointAlignments:
                 self._mov_points.pop(i)
                 break
 
-    def _find_neighbor_point(self, points, event):
+    def _find_neighbor_point(self, points: dict, event):
         """Find point around mouse position.
         If found, return the point (x, y), otherwise return None.
 

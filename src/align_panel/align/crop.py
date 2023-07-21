@@ -19,16 +19,16 @@ def normal_round(number: float):
 
 
 def align_auto(
-    ref_image, mov_image, method: str, inverse=True, sub_pixel_factor: int = 2
+    ref_image: np.ndarray, mov_image: np.ndarray, method: str, inverse=True, sub_pixel_factor: int = 2
 ):
     """Automatic alignment of two images. As an input, the function takes two images, of
     ``numpy array`` type, and the method for alignment.
 
     Parameters
     ----------
-    ref_image : np.array
+    ref_image : np.ndarray
         Reference image.
-    mov_image : np.array
+    mov_image : np.ndarray
         Image to be aligned.
     method : str
         Method for alignment. The options are: ``PyStackReg_translation``, ``PyStackReg_rigid``,
@@ -165,20 +165,20 @@ class CropAlign:
 
     def __init__(
         self,
-        ref_image: np.array,
-        mov_image: np.array,
+        ref_image: np.ndarray,
+        mov_image: np.ndarray,
         rebin: int = 8,
         method: str = "None",
-        inverse=True,
-        sub_pixel_factor=2,
-        show_result=True,
+        inverse: bool = True,
+        sub_pixel_factor: int = 2,
+        show_result: bool = True,
     ):
         """
         Parameters
         ----------
-        ref_image : np.array
+        ref_image : np.ndarray
             Reference image.
-        mov_image : np.array
+        mov_image : np.ndarray
             Image to be aligned.
         rebin : int, optional
             Rebinning factor for the images. The default is 8.

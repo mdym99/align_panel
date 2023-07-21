@@ -6,7 +6,7 @@ import json
 from abc import ABC, abstractclassmethod, abstractmethod
 import hyperspy.io as hs
 import numpy as np
-from nexusformat.nexus import NXdata, NXentry, NXfield, NXlink, nxopen
+from nexusformat.nexus import NXdata, NXentry, NXfield, NXlink, nxopen, NXlinkgroup, NXgroup
 from hyperspy._signals.hologram_image import HologramImage, Signal2D
 
 
@@ -161,7 +161,7 @@ class ImageSet(ABC):
                     )
 
     def __save_image(
-        self, key: str, file, id_number: int
+        self, key: str, file: NXlinkgroup or NXgroup, id_number: int
     ):  # could be changed to be without __
         """Method that saves image inside the NeXus file. Image is saved into the raw_data group,
         metadata and original metadata are saved into the metadata group, axes are saved as
@@ -215,7 +215,7 @@ class ImageSet(ABC):
         if isinstance(self.tmat,np.ndarray) and key == "image":
             file[f"raw_data/imageset_{id_number}/alignments/tmat"] = NXfield(self.tmat)
 
-    def __file_prep(self, file):
+    def __file_prep(self, file: NXlinkgroup or NXgroup):
         """Method that prepares the NeXus file for saving the imageset. It is used by the ``save``
         method.
 
@@ -270,7 +270,7 @@ class ImageSet(ABC):
             self.__save_image(file=opened_file, key="image", id_number=id_number)
 
     @staticmethod
-    def __load_image_from_nxs(file, key: str, id_number: int):
+    def __load_image_from_nxs(file: NXlinkgroup or NXgroup, key: str, id_number: int):
         """Method that loads the image from the NeXus file. It is used by the ``load_from_nxs``
         method.
 
@@ -622,7 +622,7 @@ class ImageSetHolo(ImageSet):
             return cls(image, ref_image)
         return cls(image)
 
-    def __save_ref_image(self, file, id_number: int):
+    def __save_ref_image(self, file: NXlinkgroup or NXgroup, id_number: int):
         """Method that saves the reference image inside the NeXus file. It is used by the ``save``
         method.
 
@@ -681,7 +681,7 @@ class ImageSetHolo(ImageSet):
 
     @staticmethod
     def __load_image_from_nxs(
-        file, key: str, id_number: int
+        file: NXlinkgroup or NXgroup, key: str, id_number: int
     ):  # is there the need to redefine it just because of HologramImage instead of Signal2D?
         """Method that loads the image from the NeXus file. It is used by the ``load_from_nxs``
         method.
@@ -771,10 +771,10 @@ class ImageSetHolo(ImageSet):
     def phase_calculation(
         self,
         sb_option: str = "upper",
-        sb_size_scale: int = 1,
-        use_existing_params=False,
-        visualize=False,
-        save_jpeg=False,
+        sb_size_scale: int or float = 1,
+        use_existing_params: bool = False,
+        visualize: bool = False,
+        save_jpeg: bool = False,
         path: str = None,
     ):
         """Method that reconstructs the phase of image.
@@ -958,7 +958,7 @@ class ImageSetXMCD(ImageSet):
         super().save(path)
 
     @classmethod
-    def load_from_nxs(cls, path: str, id_number=0):
+    def load_from_nxs(cls, path: str, id_number: int = 0):
         """Class method that loads the imageset from the NeXus file. It utilizes
         the ``load_image_from_nxs`` method of the ImageSet class.
 

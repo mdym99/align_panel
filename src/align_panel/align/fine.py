@@ -63,17 +63,17 @@ class FineAlignments:
 
     def __init__(
         self,
-        ref_image: np.array,
-        mov_image: np.array,
-        rebin: int,
+        ref_image: np.ndarray,
+        mov_image: np.ndarray,
+        rebin: int = 8,
         show_result: bool = True,
     ):
         """
         Parameters
         ----------
-        ref_image : np.array
+        ref_image : np.ndarray
             Reference image.
-        mov_image : np.array
+        mov_image : np.ndarray
             Moving image.
         rebin : int
             Rebinning factor.
