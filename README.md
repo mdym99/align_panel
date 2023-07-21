@@ -52,3 +52,20 @@ To walk towards the open access of scientific data, our goal was to develop a un
 Documentation of ``nexusformat``:
 <https://manual.nexusformat.org/>
 
+# 3 Features
+
+- data_structure - module capable of loading, handling and saving the experimental data
+- image_transformer - module handling the transformation matrices and image transformations
+- notebook_helpers - module contatining usefull functions for jupyter notebook, such as stop button, or function to adjust the width of the notebook window
+- align - folder containing the alignments
+    - crop - module for cropping the images and automatic alignments
+    - fine - module for fine alignments with keyboard control
+    - points - module for manual alignments with point definition
+
+# 4 Examples
+
+Examples can be found in the **examples** folder. With several notebooks and scripts, it is possible to get familiar with the library and its possibilities.
+
+# 5 Tests
+
+Very basic tests were created with the help of the ``pytest`` library situated in the **tests** folder.
