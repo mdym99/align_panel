@@ -68,6 +68,10 @@ class ImageSet(ABC):
     flip_axes(axis="y")
         Flips the axes of all the images of the imageset.
         Axis is the axis to be flipped. It can be "x", "y" or "both".
+    save_tmat(path, id_number, note=None)
+        Saves the transformation matrix in the NeXus file.
+        Path is the path of the NeXus file, id_number is the order number of the imageset
+        and note is the note about the tmat.
 
     """
 
@@ -455,6 +459,30 @@ class ImageSet(ABC):
             elif axis == "both":
                 image.data = np.flip(image.data, axis=0)
                 image.data = np.flip(image.data, axis=1)
+
+    def save_tmat(self, path: str , id_number: int, note: str = None):
+        """ Method that saves the transformation matrix in the NeXus file.
+        If the tmat is already saved, it will be overwritten.
+
+        Parameters
+        ----------
+        path : str
+            Path of the NeXus file, in which the tmat is saved.
+        id_number : int
+            Number of the imageset. Defines the order of the imagesets in the NeXus file.
+        note : str, optional
+            Note about the tmat, by default None
+        
+        """
+        with nxopen(path, "a") as opened_file:
+            if "alignments" in opened_file[f"raw_data/imageset_{id_number}"].tree:
+                print("The tmat is already saved and will be overwritten.")
+                opened_file[f"raw_data/imageset_{id_number}/alignments/tmat"] = NXfield(self.tmat)
+            else:
+                opened_file[f"raw_data/imageset_{id_number}/alignments"] = NXdata()
+                opened_file[f"raw_data/imageset_{id_number}/alignments/tmat"] = NXfield(self.tmat)
+            if note:
+                opened_file[f"raw_data/imageset_{id_number}/alignments/tmat"].attrs["note"] = note
 
 
 class ImageSetHolo(ImageSet):
