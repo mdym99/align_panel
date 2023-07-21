@@ -1,3 +1,7 @@
+"""
+Run from the test folder.
+"""
+
 import pytest
 import numpy as np
 import hyperspy.io as hs
@@ -8,12 +12,12 @@ import os
 
 @pytest.fixture
 def path1():
-    return os.path.dirname(os.getcwd()) + "\mag_img_align\data\92_pol+1_+23V_2ns.tiff"
+    return os.path.dirname(os.getcwd()) + "\data\92_pol+1_+23V_2ns.tiff"
 
 
 @pytest.fixture
 def path2():
-    return os.path.dirname(os.getcwd()) + "\mag_img_align\data\93_pol-1_+23V_2ns.tiff"
+    return os.path.dirname(os.getcwd()) + "\data\93_pol-1_+23V_2ns.tiff"
 
 
 @pytest.fixture

@@ -9,27 +9,27 @@ import os
 
 @pytest.fixture(scope="session")
 def path1():
-    return os.path.dirname(os.getcwd()) + "\mag_img_align\data\Hb-.dm3"
+    return os.path.dirname(os.getcwd()) + "\data\Hb-.dm3"
 
 
 @pytest.fixture(scope="session")
 def path2():
-    return os.path.dirname(os.getcwd()) + "\mag_img_align\data\Rb-.dm3"
+    return os.path.dirname(os.getcwd()) + "\data\Rb-.dm3"
 
 
 @pytest.fixture(scope="session")
 def path3():
-    return os.path.dirname(os.getcwd()) + "\mag_img_align\data\Hb+.dm3"
+    return os.path.dirname(os.getcwd()) + "\data\Hb+.dm3"
 
 
 @pytest.fixture(scope="session")
 def path4():
-    return os.path.dirname(os.getcwd()) + "\mag_img_align\data\Rb+.dm3"
+    return os.path.dirname(os.getcwd()) + "\data\Rb+.dm3"
 
 
 @pytest.fixture(scope="session")
 def path5():
-    return os.path.dirname(os.getcwd()) + "mag_img_align\data\92_pol+1_+23V_2ns.tiff"
+    return os.path.dirname(os.getcwd()) + "\data\92_pol+1_+23V_2ns.tiff"
 
 
 @pytest.fixture(scope="session")

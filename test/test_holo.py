@@ -1,3 +1,6 @@
+"""
+Run from the test folder.
+"""
 from pathlib import Path
 import pytest
 import numpy as np
