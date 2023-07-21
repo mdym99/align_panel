@@ -1,0 +1,45 @@
+Usefull Information
+===========
+
+# 1 Important libraries that are used
+
+Documentation of ``Hyperspy``:
+<http://hyperspy.org/hyperspy-doc/current/index.html>
+
+Documentation of ``nexusformat``:
+<https://manual.nexusformat.org/>
+
+# 2 Automatic alignment techniques
+
+## 2.1 Currently used
+
+    - Phase cross correlation from hyperspy - <http://hyperspy.org/hyperspy-doc/current/api/hyperspy._signals.signal2d.html#hyperspy._signals.signal2d.estimate_image_shift>
+    - Phase cross correlation from scikit-image - <https://scikit-image.org/docs/dev/api/skimage.registration.html#skimage.registration.phase_cross_correlation>
+    - PyStackReg - <https://pystackreg.readthedocs.io/en/latest/index.html>
+
+## 2.2 Possible future implementations - tried but didnt work the best
+
+    - imreg_dft - <https://github.com/matejak/imreg_dft>
+    - image-registration - <https://image-registration.readthedocs.io/en/latest/image_registration.html>
+    - zorro - <https://github.com/C-CINA/zorro>
+    - phase cross corelation in log polar coordinates - possible solution for automatic alignments with scaling and rotation
+        <https://scikit-image.org/docs/stable/auto_examples/registration/plot_register_rotation.html#recover-rotation-and-scaling-differences-with-log-polar-transform>
+
+
+# 3 Implementation of .xrm data loading for XMCD-TXM
+
+- dxchange - <https://dxchange.readthedocs.io/en/latest/source/api/dxchange.reader.html#dxchange.reader.read_xrm>
+
+# 4 Article about unwrapping phase
+    <https://opg.optica.org/ao/abstract.cfm?uri=ao-41-35-7437>
+
+# 5 Library for Lorentz TEM microscopy - both simulations and real data treatment
+    <https://pylorentztem.readthedocs.io/en/latest/?badge=latest>
+
+# 6 Problem of notebooks not stopping when qt is used
+Problem of interactive matplotlib windows with qt used can be solved with the following code:
+
+```bash
+import matplotlib
+matplotlib.use('TkAgg')
+```

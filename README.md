@@ -1,8 +1,7 @@
 Align Panel
 ===========
 ``align_panel`` is an python library for processing images acquired by magnetic imaging techniques. This library provides a procedure for loading and saving raw data and contains 
-image alignment workflow usefull for techniques utilizing multi-acquisitions. Currently, data processing workflow is developed for electron holography images of *.dm3* and *.dm4* formats,
-and for XMCD-PEEM/TXM images of *.tiff* format. 
+image alignment workflow usefull for techniques utilizing multi-acquisitions. Currently, data processing workflow is developed for image formats loadable by ``Hyperspy`` library and saved into ``NeXus`` format by ``nexusformat`` library.
 
 # 1 Installation
 This manual suppose that you are using the anaconda python distribution. To begin the installation, open the **Anaconda Powershell Prompt** command line.
@@ -54,13 +53,13 @@ Documentation of ``nexusformat``:
 
 # 3 Features
 
-- data_structure - module capable of loading, handling and saving the experimental data
-- image_transformer - module handling the transformation matrices and image transformations
-- notebook_helpers - module contatining usefull functions for jupyter notebook, such as stop button, or function to adjust the width of the notebook window
-- align - folder containing the alignments
-    - crop - module for cropping the images and automatic alignments
-    - fine - module for fine alignments with keyboard control
-    - points - module for manual alignments with point definition
+- ``data_structure`` - module capable of loading, handling and saving the experimental data
+- ``image_transformer`` - module handling the transformation matrices and image transformations
+- ``notebook_helpers`` - module contatining usefull functions for jupyter notebook, such as stop button, or function to adjust the width of the notebook window
+- ``align`` - folder containing the alignments
+    - ``crop`` - module for cropping the images and automatic alignments
+    - ``fine`` - module for fine alignments with keyboard control
+    - ``points`` - module for manual alignments with point definition
 
 # 4 Examples
 
