@@ -317,7 +317,7 @@ class PointAlignments:
         """
         if not self._dragging_point:
             return
-        if event.xdata is None or event.ydata is None:
+        if not event.xdata or not event.ydata:
             return
         if event.inaxes in [self._axes[0]]:
             for i in range(len(self._points)):
@@ -338,7 +338,7 @@ class PointAlignments:
         """
         if not self._dragging_point:
             return
-        if event.xdata is None or event.ydata is None:
+        if not event.xdata or not event.ydata:
             return
         if event.inaxes in [self._axes[1]]:
             for i in range(len(self._mov_points)):
