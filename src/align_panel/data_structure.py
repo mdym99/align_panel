@@ -6,7 +6,15 @@ import json
 from abc import ABC, abstractclassmethod, abstractmethod
 import hyperspy.io as hs
 import numpy as np
-from nexusformat.nexus import NXdata, NXentry, NXfield, NXlink, nxopen, NXlinkgroup, NXgroup
+from nexusformat.nexus import (
+    NXdata,
+    NXentry,
+    NXfield,
+    NXlink,
+    nxopen,
+    NXlinkgroup,
+    NXgroup,
+)
 from hyperspy._signals.hologram_image import HologramImage, Signal2D
 
 
@@ -216,7 +224,7 @@ class ImageSet(ABC):
         file[
             f"raw_data/imageset_{id_number}/metadata/{key}_original_metadata"
         ] = NXfield(json.dumps(image.original_metadata.as_dictionary()))
-        if isinstance(self.tmat,np.ndarray) and key == "image":
+        if isinstance(self.tmat, np.ndarray) and key == "image":
             file[f"raw_data/imageset_{id_number}/alignments/tmat"] = NXfield(self.tmat)
 
     def __file_prep(self, file: NXlinkgroup or NXgroup):
@@ -254,7 +262,7 @@ class ImageSet(ABC):
         ] = self.type_measurement
         file[f"raw_data/imageset_{id_number}/raw_images"] = NXdata()
         file[f"raw_data/imageset_{id_number}/metadata"] = NXdata()
-        if isinstance(self.tmat,np.ndarray):
+        if isinstance(self.tmat, np.ndarray):
             file[f"raw_data/imageset_{id_number}/alignments"] = NXdata()
         return id_number
 
@@ -400,10 +408,10 @@ class ImageSet(ABC):
         id_number : int, optional
             Number of the imageset. Defines the order of the imagesets in the NeXus file,
             by default 0
-            
+
         """
         with nxopen(path_file, "rw") as oppened_file:
-            print(oppened_file['raw_data'][f'imageset_{id_number}']['metadata'][name])
+            print(oppened_file["raw_data"][f"imageset_{id_number}"]["metadata"][name])
 
     def images_content(self):
         """Generator that yields the images of the imageset.
@@ -415,7 +423,7 @@ class ImageSet(ABC):
 
         """
         for image in self.images.values():
-            if image is not None:
+            if image:
                 yield image
 
     def set_axes(self, axis1_name: str, axis2_name: str, units: str, scale: int = None):
@@ -438,7 +446,7 @@ class ImageSet(ABC):
             image.axes_manager[1].name = axis2_name
             image.axes_manager[0].units = units
             image.axes_manager[1].units = units
-            if scale is not None:
+            if scale:
                 image.axes_manager[0].scale = scale
                 image.axes_manager[1].scale = scale
 
@@ -460,8 +468,8 @@ class ImageSet(ABC):
                 image.data = np.flip(image.data, axis=0)
                 image.data = np.flip(image.data, axis=1)
 
-    def save_tmat(self, path: str , id_number: int, note: str = None):
-        """ Method that saves the transformation matrix in the NeXus file.
+    def save_tmat(self, path: str, id_number: int, note: str = None):
+        """Method that saves the transformation matrix in the NeXus file.
         If the tmat is already saved, it will be overwritten.
 
         Parameters
@@ -472,37 +480,43 @@ class ImageSet(ABC):
             Number of the imageset. Defines the order of the imagesets in the NeXus file.
         note : str, optional
             Note about the tmat, by default None
-        
+
         """
         with nxopen(path, "a") as opened_file:
             if "alignments" in opened_file[f"raw_data/imageset_{id_number}"].tree:
                 print("The tmat is already saved and will be overwritten.")
-                opened_file[f"raw_data/imageset_{id_number}/alignments/tmat"] = NXfield(self.tmat)
+                opened_file[f"raw_data/imageset_{id_number}/alignments/tmat"] = NXfield(
+                    self.tmat
+                )
             else:
                 opened_file[f"raw_data/imageset_{id_number}/alignments"] = NXdata()
-                opened_file[f"raw_data/imageset_{id_number}/alignments/tmat"] = NXfield(self.tmat)
+                opened_file[f"raw_data/imageset_{id_number}/alignments/tmat"] = NXfield(
+                    self.tmat
+                )
             if note:
-                opened_file[f"raw_data/imageset_{id_number}/alignments/tmat"].attrs["note"] = note
+                opened_file[f"raw_data/imageset_{id_number}/alignments/tmat"].attrs[
+                    "note"
+                ] = note
 
 
 class ImageSetHolo(ImageSet):
-    """A child class of the ImageSet class. It is used for the holography imagesets. 
-    This class contains the methods for saving, loading and processing of the holography 
+    """A child class of the ImageSet class. It is used for the holography imagesets.
+    This class contains the methods for saving, loading and processing of the holography
     imagesets. Phase calculation is implemented with the help of hyperspy library.
 
     Attributes
     ----------
     images : dict
-        Dictionary containing the images of the imageset. The keys are the names of the images. 
+        Dictionary containing the images of the imageset. The keys are the names of the images.
         The keys are:
-            ``image``: HologramImage - the hologram image of a sample 
-            ``ref_image``: HologramImage - the reference image 
-            ``wave_image``: ComplexSignal2D - the reconstructed wave image 
+            ``image``: HologramImage - the hologram image of a sample
+            ``ref_image``: HologramImage - the reference image
+            ``wave_image``: ComplexSignal2D - the reconstructed wave image
                             containing:     amplitude
                                             phase
                                             real part
                                             imaginary part
-            ``unwrapped_phase``: Signal2D - the unwrapped phase image 
+            ``unwrapped_phase``: Signal2D - the unwrapped phase image
     type_measurement : str
         The type of the measurement. It is used as an attribute of the NXdata group.
         by default "holography"
@@ -523,10 +537,10 @@ class ImageSetHolo(ImageSet):
         Loads the imageset from the NeXus file. It utilizes the ``__load_image_from_nxs`` method.
     phase_calculation(sb_option="upper", sb_size_scale=1, use_existing_params=False,
                         visualize=False, save_jpeg=False, path=None)
-        Method that reconstructs the phase of image. It utilizes the 
-        ``estimate_sideband_position`` and ``estimate_sideband_size`` methods of hyperspy 
-        library to estimate the sideband position 
-        and size. The sideband position and size are saved in the metadata of the image. For the 
+        Method that reconstructs the phase of image. It utilizes the
+        ``estimate_sideband_position`` and ``estimate_sideband_size`` methods of hyperspy
+        library to estimate the sideband position
+        and size. The sideband position and size are saved in the metadata of the image. For the
         phase reconstruction, the ``reconstruct_phase`` method of hyperspy library is used.
 
     """
@@ -755,7 +769,10 @@ class ImageSetHolo(ImageSet):
             full_image.metadata["General"]["title"] = full_image.metadata["General"][
                 "original_filename"
             ].split(".")[0]
-        if "alignments" in file[f"raw_data/imageset_{id_number}"].tree and key == "image":
+        if (
+            "alignments" in file[f"raw_data/imageset_{id_number}"].tree
+            and key == "image"
+        ):
             tmat = file[f"raw_data/imageset_{id_number}/alignments/tmat"].nxdata
             return full_image, tmat
         return full_image, None
@@ -781,7 +798,7 @@ class ImageSetHolo(ImageSet):
 
         """
         with nxopen(path, "r") as opened_file:
-            full_image,tmat = cls.__load_image_from_nxs(
+            full_image, tmat = cls.__load_image_from_nxs(
                 file=opened_file, key="image", id_number=id_number
             )
             if "ref_image" in opened_file[f"raw_data/imageset_{id_number}/raw_images"]:
@@ -839,7 +856,7 @@ class ImageSetHolo(ImageSet):
             Path of the file, in which the unwrapped phase image is saved, by default None
 
         """
-        if use_existing_params is False:
+        if not use_existing_params:
             sb_position = self.ref_image.estimate_sideband_position(
                 ap_cb_radius=None, sb=sb_option, show_progressbar=False
             )
@@ -851,9 +868,13 @@ class ImageSetHolo(ImageSet):
             )
         else:
             if "Holography" in self.image.metadata.Signal.keys():
-                sb_position = tuple(np.array(self.image.metadata["Signal"]["Holography"][
-                    "Reconstruction_parameters"
-                ]["sb_position"]).astype(int))
+                sb_position = tuple(
+                    np.array(
+                        self.image.metadata["Signal"]["Holography"][
+                            "Reconstruction_parameters"
+                        ]["sb_position"]
+                    ).astype(int)
+                )
                 sb_size = (
                     self.image.metadata["Signal"]["Holography"][
                         "Reconstruction_parameters"
@@ -869,7 +890,7 @@ class ImageSetHolo(ImageSet):
             parallel=True,
             show_progressbar=False,
         )
-        if use_existing_params is False:
+        if not use_existing_params:
             self.image.metadata["Signal"]["Holography"] = self.wave_image.metadata[
                 "Signal"
             ]["Holography"]
@@ -894,15 +915,12 @@ class ImageSetHolo(ImageSet):
                     "Reconstruction_parameters"
                 ]["sb_smoothness"].data
             )
-            if (
-                self.wave_image.metadata["Signal"]["Holography"][
+            if self.wave_image.metadata["Signal"]["Holography"][
+                "Reconstruction_parameters"
+            ]["sb_units"]:
+                self.image.metadata["Signal"]["Holography"][
                     "Reconstruction_parameters"
-                ]["sb_units"]
-                is not None
-            ):
-                self.image.metadata["Signal"]["Holography"]["Reconstruction_parameters"][
-                    "sb_units"
-                ] = str(
+                ]["sb_units"] = str(
                     self.wave_image.metadata["Signal"]["Holography"][
                         "Reconstruction_parameters"
                     ]["sb_units"].data
@@ -918,16 +936,16 @@ class ImageSetHolo(ImageSet):
 
 
 class ImageSetXMCD(ImageSet):
-    """A child class of the ImageSet class. It is used for the XMCD imagesets. 
-    This class contains the methods for saving, loading and processing of the XMCD 
+    """A child class of the ImageSet class. It is used for the XMCD imagesets.
+    This class contains the methods for saving, loading and processing of the XMCD
     imagesets.
 
     Atributes
     ----------
     images : dict
-        Dictionary containing the images of the imageset. The keys are the names of the images. 
+        Dictionary containing the images of the imageset. The keys are the names of the images.
         The keys are:
-            ``image``: Signal2D - the XMCD image of a sample 
+            ``image``: Signal2D - the XMCD image of a sample
     type_measurement : str
         The type of the measurement. It is used as an attribute of the NXdata group.
         by default "xmcd"
