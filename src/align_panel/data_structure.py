@@ -246,8 +246,9 @@ class ImageSet(ABC):
             id_number = 0
             file["raw_data"] = NXentry()
         else:
-            data_stored = [*file["raw_data"]]
-            id_number = len(data_stored)
+            stored_indexes = [*file['raw_data']]
+            stored_indexes = [int(index.split('_')[-1]) for index in stored_indexes]
+            id_number = max(stored_indexes)+1
             if (
                 file[f"raw_data/imageset_{id_number-1}/raw_images/image"].shape
                 != self.image.data.shape
