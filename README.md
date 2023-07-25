@@ -61,10 +61,16 @@ Documentation of ``nexusformat``:
     - ``fine`` - module for fine alignments with keyboard control
     - ``points`` - module for manual alignments with point definition
 
-# 4 Examples
+# 4 Automatic alignments
+
+Currently used automatic alignments:
+- phase cross correlation from ``Hyperspy`` library (<http://hyperspy.org/hyperspy-doc/current/api/hyperspy._signals.signal2d.html#hyperspy._signals.signal2d.estimate_image_shift>) and from ``scikit-image`` library (<https://scikit-image.org/docs/dev/api/skimage.registration.html#skimage.registration.phase_cross_correlation>).
+- ``PyStackReg`` library (<https://pystackreg.readthedocs.io/en/latest/index.html>)
+
+# 5 Examples
 
 Examples can be found in the **examples** folder. With several notebooks and scripts, it is possible to get familiar with the library and its possibilities.
 
-# 5 Tests
+# 6 Tests
 
 Very basic tests were created with the help of the ``pytest`` library situated in the **tests** folder.
