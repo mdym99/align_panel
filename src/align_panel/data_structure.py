@@ -521,6 +521,9 @@ class ImageSetHolo(ImageSet):
     type_measurement : str
         The type of the measurement. It is used as an attribute of the NXdata group.
         by default "holography"
+    tmat : AffineTransform
+        Transformation matrix. It is used for the alignment of the imagesets.
+        By default None.
 
     Methods
     -------
@@ -550,7 +553,6 @@ class ImageSetHolo(ImageSet):
         self,
         image: HologramImage,
         ref_image: HologramImage = None,
-        type_measurement: str = "holography",
     ):
         """
          Parameters
@@ -559,8 +561,6 @@ class ImageSetHolo(ImageSet):
             Hologram image of a sample.
         ref_image : HologramImage, optional
             Reference image, by default None
-        type_measurement : str, optional
-            Describes the type of measurement, by default "holography"
 
         Raises
         ------
@@ -584,7 +584,7 @@ class ImageSetHolo(ImageSet):
                     "The image and the reference image must have the same shape."
                 )
 
-        super().__init__(image, type_measurement=type_measurement)
+        super().__init__(image, type_measurement="holography")
         self.images["ref_image"] = ref_image
         self.images["wave_image"] = None
         self.images["unwrapped_phase"] = None
@@ -950,6 +950,9 @@ class ImageSetXMCD(ImageSet):
     type_measurement : str
         The type of the measurement. It is used as an attribute of the NXdata group.
         by default "xmcd"
+    tmat : AffineTransform
+        Transformation matrix. It is used for the alignment of the imagesets.
+        By default None.
 
     """
 
@@ -959,7 +962,6 @@ class ImageSetXMCD(ImageSet):
         ----------
         image : Signal2D
             XMCD image of a sample.
-        type_measurement : str, optional
 
         Raises
         ------
