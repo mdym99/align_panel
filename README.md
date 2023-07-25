@@ -29,7 +29,7 @@ conda install -c conda-forge pystackreg
 
 Second, install the align_panel library:
 ```bash
-pip install https://github.com/znekula/align_panel/releases/download/0.0.1/align_panel-0.0.1-py3-none-any.whl
+pip install https://github.com/mdym99/align_panel/releases/download/0.0.7/align_panel-0.0.7-py3-none-any.whl
 ```
 
 Third, install jupyter notebook:
