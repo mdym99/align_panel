@@ -308,7 +308,7 @@ class CropAlignments:
                     selector.set_active(True)
         if event.key == " ":
             self._selectors[1].set_visible(True)
-            self._selectors[1].draw_shape(self._selectors[0].extents)
+            self._selectors[1]._draw_shape(self._selectors[0].extents)
             self._selectors[1]._center_handle.set_data(*self._selectors[0].center)
             self._selectors[1]._edge_handles.set_data(*self._selectors[0].edge_centers)
             self._selectors[1]._corner_handles.set_data(*self._selectors[0].corners)
