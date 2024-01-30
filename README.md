@@ -12,7 +12,7 @@ This is optional. Instalation of the library into a new environment will prevent
 
 To crate a new environment by anaconda:
 ```bash
-conda create --name myenv
+conda create --name myenv python=3.9
 ```
 (see <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html> for more information).
 
